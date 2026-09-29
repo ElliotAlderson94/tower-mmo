@@ -2,12 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>TOWER — Climb the Tower</title>
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
 </head>
 <body>
+  <div id="game-container"></div>
   <div id="ui">
     <div id="auth-screen">
       <h1>TOWER</h1>
@@ -15,11 +16,11 @@
       <div class="auth-box">
         <div id="login-form">
           <label>USERNAME</label>
-          <input type="text" id="login-user" maxlength="16" autocomplete="username" />
+          <input type="text" id="login-user" maxlength="16" autocomplete="username" tabindex="1" autofocus />
           <label>PASSWORD</label>
-          <input type="password" id="login-pass" maxlength="32" autocomplete="current-password" />
+          <input type="password" id="login-pass" maxlength="32" autocomplete="current-password" tabindex="2" />
           <div class="auth-btns">
-            <button class="pixel-btn gold" id="login-btn">LOGIN</button>
+            <button class="pixel-btn gold" id="login-btn" tabindex="3">LOGIN</button>
           </div>
           <div class="auth-error" id="login-error"></div>
           <div class="auth-switch" id="to-register">No account? REGISTER</div>
@@ -129,7 +130,7 @@
         <div class="profile-row"><span>Level</span><span id="profile-level">1</span></div>
         <div class="profile-row"><span>Highest Floor</span><span id="profile-floor">1</span></div>
         <div class="profile-row"><span>Gold</span><span id="profile-gold">0</span></div>
-        <div class="profile-row"><span>Enemies S lain</span><span id="profile-kills">0</span></div>
+        <div class="profile-row"><span>Enemies Slain</span><span id="profile-kills">0</span></div>
         <div class="profile-row"><span>Bosses Defeated</span><span id="profile-bosses">0</span></div>
         <div class="profile-row"><span>Deaths</span><span id="profile-deaths">0</span></div>
       </div>
@@ -154,7 +155,6 @@
     <div id="toast"></div>
   </div>
 
-  <div id="game-container"></div>
   <script src="game.js"></script>
 </body>
 </html>
