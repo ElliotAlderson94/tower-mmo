@@ -14,7 +14,7 @@
       <p class="subtitle">Climb. Survive. Ascend.</p>
       <input type="text" id="name-input" placeholder="Enter your name" maxlength="16" />
       <button id="join-btn">Enter the Tower</button>
-      <p class="hint">Floor 1 • Multiplayer</p>
+      <p class="hint">Floor 1 • Multiplayer • Combat • Skills</p>
     </div>
 
     <div id="hud" class="hidden">
@@ -23,18 +23,53 @@
         <span id="player-level">Lv.1</span>
         <span id="player-floor">Floor 1</span>
       </div>
-      <div id="hp-bar-container">
-        <div id="hp-bar"></div>
+
+      <div class="bar-group">
+        <div class="bar-label">HP</div>
+        <div class="bar-container"><div id="hp-bar"></div></div>
       </div>
+      <div class="bar-group" style="top: 78px">
+        <div class="bar-label">MP</div>
+        <div class="bar-container mana"><div id="mana-bar"></div></div>
+      </div>
+      <div class="bar-group" style="top: 100px">
+        <div class="bar-label">XP</div>
+        <div class="bar-container xp"><div id="xp-bar"></div></div>
+      </div>
+
+      <div id="skills-bar">
+        <div class="skill" title="Slash (Q)"><span>Q</span> Slash</div>
+        <div class="skill" title="Dash (E)"><span>E</span> Dash</div>
+        <div class="skill" title="Shockwave (R)"><span>R</span> Shockwave</div>
+        <div class="skill basic" title="Basic Attack (Space)"><span>Spc</span> Attack</div>
+      </div>
+
+      <div id="stats-panel">
+        <div class="panel-title">Stats <span id="skill-points">0</span> pts</div>
+        <div class="stat-row">STR <span id="stat-str">5</span> <button class="stat-btn" data-stat="str">+</button></div>
+        <div class="stat-row">AGI <span id="stat-agi">5</span> <button class="stat-btn" data-stat="agi">+</button></div>
+        <div class="stat-row">VIT <span id="stat-vit">5</span> <button class="stat-btn" data-stat="vit">+</button></div>
+      </div>
+
+      <div id="inventory-panel">
+        <div class="panel-title">Inventory</div>
+        <div class="inv-empty">Empty</div>
+      </div>
+
       <div id="chat-box">
         <div id="chat-messages"></div>
         <input type="text" id="chat-input" placeholder="Press Enter to chat..." maxlength="120" />
       </div>
     </div>
+
+    <div id="death-screen" class="hidden">
+      <h2>You Died</h2>
+      <p>Respawning in a moment...</p>
+      <button id="respawn-btn">Respawn Now</button>
+    </div>
   </div>
 
   <div id="game-container"></div>
-
   <script src="game.js"></script>
 </body>
 </html>
