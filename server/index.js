@@ -1,8 +1,10 @@
+const express = require('express');
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const { WebSocketServer } = require('ws');
+const cors = require('cors');
 
 function uuidv4() {
   return crypto.randomUUID ? crypto.randomUUID() :
@@ -25,27 +27,16 @@ function saveAccounts() {
   try { fs.writeFileSync(ACCOUNTS_FILE, JSON.stringify(accounts, null, 2)); } catch (e) { console.error('[save]', e.message); }
 }
 
-const MIME = {
-  '.html': 'text/html; charset=utf-8', '.js': 'application/javascript; charset=utf-8',
-  '.css': 'text/css; charset=utf-8', '.json': 'application/json',
-  '.png': 'image/png', '.ico': 'image/x-icon'
-};
+const app = express();
+app.use(cors());
+app.use(express.static(CLIENT_DIR));
+app.get('/health', (_req, res) => res.json({ ok: true, game: 'tower-mmo' }));
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/ws')) return next();
+  res.sendFile(path.join(CLIENT_DIR, 'index.html'), (err) => { if (err) next(); });
+});
 
-function serveStatic(req, res) {
-  let urlPath = decodeURIComponent((req.url || '/').split('?')[0]);
-  if (urlPath === '/') urlPath = '/index.html';
-  const safe = path.normalize(urlPath).replace(/^(\.\.[/\\])+/, '');
-  const filePath = path.join(CLIENT_DIR, safe);
-  if (!filePath.startsWith(CLIENT_DIR)) { res.writeHead(403); res.end('Forbidden'); return; }
-  fs.readFile(filePath, (err, data) => {
-    if (err) { res.writeHead(404); res.end('Not found'); return; }
-    const ext = path.extname(filePath).toLowerCase();
-    res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream', 'Cache-Control': 'no-cache' });
-    res.end(data);
-  });
-}
-
-const server = http.createServer(serveStatic);
+const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 const PORT = process.env.PORT || 3000;
 const TICK_RATE = 20;
@@ -89,7 +80,6 @@ function makeEnemy(id, type, x, y, t, isBoss) {
   return { id, type, name: t.name, x, y, hp: t.hp, maxHp: t.hp, damage: t.damage, speed: t.speed,
     xp: t.xp, gold: t.gold || 0, color: t.color, size: t.size, isBoss: !!isBoss, lastAttack: 0 };
 }
-
 function initFloor(num) {
   const def = FLOORS[num]; if (!def) return null;
   const enemies = new Map(); let eid = 0;
@@ -112,7 +102,6 @@ function getTitle(hf) {
   for (const t of TITLES) if (hf >= t.minFloor) name = t.name;
   return name;
 }
-
 function defaultPlayerData(username) {
   return {
     username, passwordHash: '', floor: 1, hp: 100, maxHp: 100, mana: 50, maxMana: 50,
@@ -122,7 +111,6 @@ function defaultPlayerData(username) {
     color: '#' + Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0')
   };
 }
-
 function getAttackDamage(p) {
   const w = (p.equipment && p.equipment.weapon && p.equipment.weapon.atk) || 0;
   return 12 + (p.stats.str || 5) * 2 + Math.floor((p.level || 1) * 1.5) + w;
@@ -132,7 +120,6 @@ function getMaxHp(p) {
   return 80 + (p.stats.vit || 5) * 12 + (p.level || 1) * 8 + a;
 }
 function getMaxMana(p) { return 40 + (p.stats.agi || 5) * 4 + (p.level || 1) * 3; }
-
 function addXp(p, amount) {
   p.xp += amount; let leveled = false;
   while (p.xp >= p.xpToLevel) {
@@ -142,7 +129,6 @@ function addXp(p, amount) {
   }
   return leveled;
 }
-
 function publicPlayer(p) {
   return { id: p.id, name: p.username, x: p.x, y: p.y, direction: p.direction, floor: p.floor,
     hp: p.hp, maxHp: p.maxHp, mana: p.mana, maxMana: p.maxMana, level: p.level, color: p.color,
@@ -299,6 +285,53 @@ wss.on('connection', (ws) => {
         player.isDead = false; player.hp = player.maxHp; player.mana = player.maxMana; player.x = 150; player.y = 400;
         broadcast(player.floor, { type: 'player_respawned', player: publicPlayer(player) });
         sendTo(player, { type: 'stats_update', hp: player.hp, mana: player.mana, maxHp: player.maxHp, maxMana: player.maxMana }); break;
+      }
+      case 'use_item': {
+        const inv = player.inventory || [];
+        const idx = inv.findIndex(i => i.id === data.itemId);
+        if (idx < 0) return;
+        const item = inv[idx];
+        if (item.type === 'consumable') {
+          if (item.effect === 'heal') player.hp = Math.min(player.maxHp, player.hp + (item.value || 40));
+          if (item.effect === 'mana') player.mana = Math.min(player.maxMana, player.mana + (item.value || 30));
+          inv.splice(idx, 1); player.inventory = inv; persistPlayer(player);
+          sendTo(player, { type: 'stats_update', hp: player.hp, mana: player.mana, maxHp: player.maxHp, maxMana: player.maxMana, inventory: player.inventory });
+          sendTo(player, { type: 'toast', message: 'Used ' + item.name });
+        }
+        break;
+      }
+      case 'equip_item': {
+        const inv = player.inventory || [];
+        const idx = inv.findIndex(i => i.id === data.itemId);
+        if (idx < 0) return;
+        const item = inv[idx];
+        if (item.type !== 'weapon' && item.type !== 'armor' && item.type !== 'accessory') return;
+        const slot = item.type === 'weapon' ? 'weapon' : item.type === 'armor' ? 'armor' : 'accessory';
+        if (!player.equipment) player.equipment = { weapon: null, armor: null, accessory: null };
+        if (player.equipment[slot]) inv.push(player.equipment[slot]);
+        player.equipment[slot] = item; inv.splice(idx, 1); player.inventory = inv;
+        player.maxHp = getMaxHp(player); player.maxMana = getMaxMana(player);
+        player.hp = Math.min(player.hp, player.maxHp); persistPlayer(player);
+        sendTo(player, { type: 'stats_update', equipment: player.equipment, inventory: player.inventory, hp: player.hp, maxHp: player.maxHp, mana: player.mana, maxMana: player.maxMana });
+        sendTo(player, { type: 'toast', message: 'Equipped ' + item.name });
+        break;
+      }
+      case 'buy': {
+        const shop = {
+          potion_hp: { price: 50, item: { name: 'Health Potion', type: 'consumable', effect: 'heal', value: 40 } },
+          potion_mp: { price: 40, item: { name: 'Mana Potion', type: 'consumable', effect: 'mana', value: 30 } },
+          sword: { price: 120, item: { name: 'Iron Sword', type: 'weapon', atk: 8 } }
+        };
+        const offer = shop[data.item];
+        if (!offer) return;
+        if ((player.gold || 0) < offer.price) { sendTo(player, { type: 'toast', message: 'Not enough gold' }); return; }
+        player.gold -= offer.price;
+        if (!Array.isArray(player.inventory)) player.inventory = [];
+        const bought = Object.assign({ id: uuidv4() }, offer.item);
+        player.inventory.push(bought); persistPlayer(player);
+        sendTo(player, { type: 'stats_update', gold: player.gold, inventory: player.inventory });
+        sendTo(player, { type: 'toast', message: 'Bought ' + bought.name });
+        break;
       }
       case 'save': { persistPlayer(player); sendTo(player, { type: 'saved' }); break; }
       default: break;
