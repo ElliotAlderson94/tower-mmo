@@ -109,11 +109,7 @@
     <div id="panel-inventory" class="panel wood-frame hidden">
       <div class="panel-head blue"><span>INVENTORY</span><button type="button" class="xbtn" id="close-inventory">✕</button></div>
       <div class="panel-body parchment">
-        <div class="equip-row">
-          <div class="equip-slot" data-slot="weapon">WPN</div>
-          <div class="equip-slot" data-slot="armor">ARM</div>
-          <div class="equip-slot" data-slot="accessory">ACC</div>
-        </div>
+        <div class="equip-row"><div class="equip-slot" data-slot="weapon">WPN</div><div class="equip-slot" data-slot="armor">ARM</div><div class="equip-slot" data-slot="accessory">ACC</div></div>
         <div class="inv-grid" id="inv-grid"></div>
         <div class="inv-footer"><span id="inv-slots">0/24</span> · ◆ <span id="inv-gold">0</span></div>
       </div>
@@ -146,9 +142,9 @@
     <div id="panel-quests" class="panel wood-frame hidden">
       <div class="panel-head blue"><span>AVAILABLE QUESTS</span><button type="button" class="xbtn" id="close-quests">✕</button></div>
       <div class="panel-body parchment">
-        <div class="quest-card"><div class="q-name">Welcome, Climber</div><p>Speak with the Guide in the Town of Beginnings.</p><div class="q-rewards">Rewards: 50◆ · 20 XP</div></div>
-        <div class="quest-card"><div class="q-name">First Ascent</div><p>Enter the Tower and defeat the Floor 1 Guardian.</p><div class="q-rewards">Rewards: Iron Sword · 100 XP</div></div>
-        <div class="quest-card"><div class="q-name">Beast Slayer</div><p>Defeat 10 enemies within the Tower.</p><div class="q-rewards">Rewards: 80◆ · Health Potion</div></div>
+        <div class="quest-card"><div class="q-name">Welcome, Climber</div><p>Speak with the Guide in town.</p><div class="q-rewards">Rewards: 50◆ · 20 XP</div></div>
+        <div class="quest-card"><div class="q-name">First Ascent</div><p>Defeat Floor 1 Guardian.</p><div class="q-rewards">Rewards: Iron Sword · 100 XP</div></div>
+        <div class="quest-card"><div class="q-name">Beast Slayer</div><p>Defeat 10 enemies.</p><div class="q-rewards">Rewards: 80◆</div></div>
       </div>
     </div>
     <div id="panel-shop" class="panel wood-frame hidden">
@@ -162,21 +158,16 @@
     <div id="panel-search" class="panel wood-frame hidden">
       <div class="panel-head blue"><span>PLAYER SEARCH</span><button type="button" class="xbtn" id="close-search">✕</button></div>
       <div class="panel-body parchment">
-        <div class="search-row">
-          <input type="text" id="search-input" placeholder="Search climber name..." maxlength="16" />
-          <button type="button" class="btn-blue sm" id="search-btn">SEARCH</button>
-        </div>
+        <div class="search-row"><input type="text" id="search-input" placeholder="Search climber..." maxlength="16" /><button type="button" class="btn-blue sm" id="search-btn">SEARCH</button></div>
         <div id="search-results" class="search-results"></div>
       </div>
     </div>
     <div id="panel-trade" class="panel wood-frame hidden">
       <div class="panel-head blue"><span>TRADE</span><button type="button" class="xbtn" id="close-trade">✕</button></div>
       <div class="panel-body parchment">
-        <p class="muted">Trade with a player on your floor. Enter their name and offer gold.</p>
-        <label>Player name</label>
-        <input type="text" id="trade-target" maxlength="16" placeholder="Username" />
-        <label>Gold to offer</label>
-        <input type="number" id="trade-gold" min="1" max="99999" value="10" />
+        <p class="muted">Trade gold with a player on your floor.</p>
+        <label>Player name</label><input type="text" id="trade-target" maxlength="16" placeholder="Username" />
+        <label>Gold to offer</label><input type="number" id="trade-gold" min="1" max="99999" value="10" />
         <button type="button" class="btn-blue" id="trade-send">SEND OFFER</button>
         <div id="trade-status" class="muted" style="margin-top:10px"></div>
         <div id="trade-incoming"></div>
@@ -195,30 +186,23 @@
       </div>
     </div>
     <div id="death-screen" class="hidden">
-      <div class="wood-frame death-frame">
-        <div class="frame-inner parchment center">
-          <div class="death-icon">☠</div>
-          <h2>YOU DIED</h2>
-          <p>The Tower claims another soul...</p>
-          <button type="button" class="btn-blue" id="respawn-btn">RESPAWN</button>
-        </div>
-      </div>
+      <div class="wood-frame death-frame"><div class="frame-inner parchment center">
+        <div class="death-icon">☠</div><h2>YOU DIED</h2><p>The Tower claims another soul...</p>
+        <button type="button" class="btn-blue" id="respawn-btn">RESPAWN</button>
+      </div></div>
     </div>
     <div id="toast"></div>
   </div>
-  <div id="modal-tos" class="modal hidden">
-    <div class="wood-frame modal-frame"><div class="frame-inner parchment">
-      <div class="panel-head blue"><span>TERMS OF SERVICE</span><button type="button" class="xbtn" id="close-tos">✕</button></div>
-      <div class="modal-body"><p>Play fairly. No cheating or harassment. Demo may reset accounts. Age 13+.</p></div>
-    </div></div>
-  </div>
-  <div id="modal-privacy" class="modal hidden">
-    <div class="wood-frame modal-frame"><div class="frame-inner parchment">
-      <div class="panel-head blue"><span>PRIVACY POLICY</span><button type="button" class="xbtn" id="close-privacy">✕</button></div>
-      <div class="modal-body"><p>We store username, hashed password, and progress. We do not sell data.</p></div>
-    </div></div>
-  </div>
-  <script src="game-ui.js"></script>
+  <div id="modal-tos" class="modal hidden"><div class="wood-frame modal-frame"><div class="frame-inner parchment">
+    <div class="panel-head blue"><span>TERMS OF SERVICE</span><button type="button" class="xbtn" id="close-tos">✕</button></div>
+    <div class="modal-body"><p>Play fairly. No cheating or harassment. Demo may reset. Age 13+.</p></div>
+  </div></div></div>
+  <div id="modal-privacy" class="modal hidden"><div class="wood-frame modal-frame"><div class="frame-inner parchment">
+    <div class="panel-head blue"><span>PRIVACY POLICY</span><button type="button" class="xbtn" id="close-privacy">✕</button></div>
+    <div class="modal-body"><p>We store username, hashed password, and progress. We do not sell data.</p></div>
+  </div></div></div>
+  <script src="game-ui-core.js"></script>
+  <script src="game-ui-net.js"></script>
   <script src="game-scene.js"></script>
 </body>
 </html>
