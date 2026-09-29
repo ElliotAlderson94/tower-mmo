@@ -13,7 +13,6 @@ function uuidv4() {
       return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
     });
 }
-
 function hashPass(pass) {
   return crypto.createHash('sha256').update(String(pass) + 'tower-salt-v1').digest('hex');
 }
@@ -22,7 +21,6 @@ const ACCOUNTS_FILE = path.join(__dirname, 'accounts.json');
 const CLIENT_DIR = path.join(__dirname, '../client');
 let accounts = {};
 try { accounts = JSON.parse(fs.readFileSync(ACCOUNTS_FILE, 'utf8') || '{}'); } catch { accounts = {}; }
-
 function saveAccounts() {
   try { fs.writeFileSync(ACCOUNTS_FILE, JSON.stringify(accounts, null, 2)); } catch (e) { console.error('[save]', e.message); }
 }
@@ -42,6 +40,7 @@ const PORT = process.env.PORT || 3000;
 const TICK_RATE = 20;
 
 const FLOORS = {
+  0: { name: 'Town of Beginnings', width: 1600, height: 1200, enemySpawns: [], boss: null },
   1: { name: 'Entrance Hall', width: 1200, height: 800,
     enemySpawns: [{type:'slime',x:400,y:300},{type:'slime',x:700,y:500},{type:'slime',x:900,y:250},{type:'wolf',x:550,y:600},{type:'wolf',x:1000,y:450}],
     boss: { type: 'guardian', x: 1100, y: 400 } },
@@ -68,9 +67,30 @@ const SKILLS = {
 };
 
 const TITLES = [
-  { minFloor: 1, name: 'Novice Climber' }, { minFloor: 2, name: 'Ranker' },
-  { minFloor: 3, name: 'Floor Breaker' }, { minFloor: 5, name: 'Tower Hunter' }, { minFloor: 10, name: 'Irregular' }
+  { minFloor: 0, name: 'Townsfolk' }, { minFloor: 1, name: 'Novice Climber' },
+  { minFloor: 2, name: 'Ranker' }, { minFloor: 3, name: 'Floor Breaker' },
+  { minFloor: 5, name: 'Tower Hunter' }, { minFloor: 10, name: 'Irregular' }
 ];
+
+const NPCS = {
+  0: [
+    { id: 'guide', name: 'Guide', x: 280, y: 520, lines: [
+      'Welcome, climber! This is the Town of Beginnings.',
+      'Walk to the TOWER on the right to start your climb.',
+      'Buy potions at the shop panel. Good luck!'
+    ]},
+    { id: 'blacksmith', name: 'Blacksmith', x: 920, y: 300, lines: [
+      'I forge blades for Rankers.',
+      'Clear floors to find better loot.',
+      'The Guardian on Floor 1 is no joke.'
+    ]},
+    { id: 'merchant', name: 'Merchant', x: 480, y: 880, lines: [
+      'Open the SHOP button to buy supplies.',
+      'Gold comes from fallen beasts.',
+      'Come back when you are richer!'
+    ]}
+  ]
+};
 
 const players = new Map();
 const floors = new Map();
@@ -83,7 +103,7 @@ function makeEnemy(id, type, x, y, t, isBoss) {
 function initFloor(num) {
   const def = FLOORS[num]; if (!def) return null;
   const enemies = new Map(); let eid = 0;
-  for (const spawn of def.enemySpawns) {
+  for (const spawn of (def.enemySpawns || [])) {
     const t = ENEMY_TYPES[spawn.type]; if (!t) continue;
     const id = 'e' + num + '_' + (eid++);
     enemies.set(id, makeEnemy(id, spawn.type, spawn.x, spawn.y, t, false));
@@ -95,7 +115,7 @@ function initFloor(num) {
   floors.set(num, { enemies, bossAlive: true });
   return floors.get(num);
 }
-initFloor(1); initFloor(2); initFloor(3);
+initFloor(0); initFloor(1); initFloor(2); initFloor(3);
 
 function getTitle(hf) {
   let name = TITLES[0].name;
@@ -104,10 +124,10 @@ function getTitle(hf) {
 }
 function defaultPlayerData(username) {
   return {
-    username, passwordHash: '', floor: 1, hp: 100, maxHp: 100, mana: 50, maxMana: 50,
+    username, passwordHash: '', floor: 0, hp: 100, maxHp: 100, mana: 50, maxMana: 50,
     level: 1, xp: 0, xpToLevel: 100, stats: { str: 5, agi: 5, vit: 5 }, skillPoints: 0,
     inventory: [], equipment: { weapon: null, armor: null, accessory: null },
-    gold: 0, highestFloor: 1, kills: 0, bosses: 0, deaths: 0, title: 'Novice Climber',
+    gold: 50, highestFloor: 0, kills: 0, bosses: 0, deaths: 0, title: 'Townsfolk',
     color: '#' + Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0')
   };
 }
@@ -152,7 +172,7 @@ function persistPlayer(p) {
   a.level = p.level; a.xp = p.xp; a.xpToLevel = p.xpToLevel; a.stats = Object.assign({}, p.stats);
   a.skillPoints = p.skillPoints; a.inventory = p.inventory || [];
   a.equipment = p.equipment || { weapon: null, armor: null, accessory: null };
-  a.gold = p.gold || 0; a.highestFloor = p.highestFloor || 1;
+  a.gold = p.gold || 0; a.highestFloor = p.highestFloor || 0;
   a.kills = p.kills || 0; a.bosses = p.bosses || 0; a.deaths = p.deaths || 0;
   a.title = p.title || getTitle(a.highestFloor); a.color = p.color; a.floor = p.floor;
   a.hp = p.hp; a.maxHp = p.maxHp; a.mana = p.mana; a.maxMana = p.maxMana; saveAccounts();
@@ -192,23 +212,24 @@ wss.on('connection', (ws) => {
       if (!acc.passwordHash && acc.password) { acc.passwordHash = hashPass(pass); delete acc.password; saveAccounts(); }
       kickSession(user);
       const p = {
-        id, ws, username: user, name: user, x: 150, y: 400, direction: 'right',
+        id, ws, username: user, name: user, x: 250, y: 520, direction: 'right',
         lastUpdate: Date.now(), isDead: false, respawnAt: 0, lastAttack: 0,
         skills: { slash: { lastUsed: 0 }, dash: { lastUsed: 0 }, shockwave: { lastUsed: 0 } },
-        floor: Math.min(Math.max(1, acc.floor || 1), acc.highestFloor || 1),
+        floor: (acc.floor === 0 || acc.floor) ? Math.max(0, acc.floor) : 0,
         hp: acc.hp || 100, maxHp: acc.maxHp || 100, mana: acc.mana || 50, maxMana: acc.maxMana || 50,
         level: acc.level || 1, xp: acc.xp || 0, xpToLevel: acc.xpToLevel || 100,
         stats: acc.stats || { str: 5, agi: 5, vit: 5 }, skillPoints: acc.skillPoints || 0,
         inventory: Array.isArray(acc.inventory) ? acc.inventory.slice() : [],
         equipment: acc.equipment || { weapon: null, armor: null, accessory: null },
-        gold: acc.gold || 0, highestFloor: acc.highestFloor || 1,
+        gold: acc.gold || 0, highestFloor: acc.highestFloor || 0,
         kills: acc.kills || 0, bosses: acc.bosses || 0, deaths: acc.deaths || 0,
-        title: acc.title || 'Novice Climber', color: acc.color || '#6688cc'
+        title: acc.title || 'Townsfolk', color: acc.color || '#6688cc'
       };
-      if (!FLOORS[p.floor]) p.floor = 1;
+      if (FLOORS[p.floor] == null) p.floor = 0;
       p.maxHp = getMaxHp(p); p.maxMana = getMaxMana(p);
       p.hp = Math.min(p.hp || p.maxHp, p.maxHp); p.mana = Math.min(p.mana || p.maxMana, p.maxMana);
-      p.title = getTitle(p.highestFloor || 1);
+      p.title = getTitle(p.highestFloor || 0);
+      if (p.floor === 0) { p.x = 250; p.y = 520; }
       players.set(id, p); userSessions.set(user, id);
       let floorState = floors.get(p.floor); if (!floorState) floorState = initFloor(p.floor);
       const enemiesList = floorState ? Array.from(floorState.enemies.values()).map(publicEnemy) : [];
@@ -218,7 +239,11 @@ wss.on('connection', (ws) => {
           xpToLevel: p.xpToLevel || 100, inventory: p.inventory, equipment: p.equipment, gold: p.gold || 0,
           kills: p.kills || 0, bosses: p.bosses || 0, deaths: p.deaths || 0, title: p.title },
         others: Array.from(players.values()).filter(o => o.id !== id && o.floor === p.floor).map(publicPlayer),
-        enemies: enemiesList, floorName: (FLOORS[p.floor] && FLOORS[p.floor].name) || 'Unknown'
+        enemies: enemiesList,
+        npcs: (NPCS[p.floor] || []).map(n => ({ id: n.id, name: n.name, x: n.x, y: n.y })),
+        floorName: (FLOORS[p.floor] && FLOORS[p.floor].name) || 'Town',
+        mapW: (FLOORS[p.floor] && FLOORS[p.floor].width) || 1600,
+        mapH: (FLOORS[p.floor] && FLOORS[p.floor].height) || 1200
       });
       broadcast(p.floor, { type: 'player_joined', player: publicPlayer(p) }, id);
       console.log('[login]', user, 'floor', p.floor); return;
@@ -281,10 +306,17 @@ wss.on('connection', (ws) => {
         broadcast(player.floor, { type: 'chat', id, name: player.username, message: msg }); break;
       }
       case 'respawn': {
-        if (!player.isDead || Date.now() < player.respawnAt) return;
-        player.isDead = false; player.hp = player.maxHp; player.mana = player.maxMana; player.x = 150; player.y = 400;
-        broadcast(player.floor, { type: 'player_respawned', player: publicPlayer(player) });
-        sendTo(player, { type: 'stats_update', hp: player.hp, mana: player.mana, maxHp: player.maxHp, maxMana: player.maxMana }); break;
+        player.isDead = false;
+        player.hp = player.maxHp;
+        player.mana = player.maxMana;
+        player.respawnAt = 0;
+        if (player.floor === 0) { player.x = 250; player.y = 520; }
+        else { player.x = 150; player.y = 400; }
+        const payload = { type: 'player_respawned', player: publicPlayer(player) };
+        broadcast(player.floor, payload);
+        sendTo(player, payload);
+        sendTo(player, { type: 'stats_update', hp: player.hp, mana: player.mana, maxHp: player.maxHp, maxMana: player.maxMana });
+        break;
       }
       case 'use_item': {
         const inv = player.inventory || [];
@@ -320,7 +352,9 @@ wss.on('connection', (ws) => {
         const shop = {
           potion_hp: { price: 50, item: { name: 'Health Potion', type: 'consumable', effect: 'heal', value: 40 } },
           potion_mp: { price: 40, item: { name: 'Mana Potion', type: 'consumable', effect: 'mana', value: 30 } },
-          sword: { price: 120, item: { name: 'Iron Sword', type: 'weapon', atk: 8 } }
+          sword: { price: 120, item: { name: 'Iron Sword', type: 'weapon', atk: 8 } },
+          armor: { price: 100, item: { name: 'Leather Armor', type: 'armor', hp: 30 } },
+          ring: { price: 80, item: { name: 'Agility Ring', type: 'accessory', agi: 2 } }
         };
         const offer = shop[data.item];
         if (!offer) return;
@@ -331,6 +365,38 @@ wss.on('connection', (ws) => {
         player.inventory.push(bought); persistPlayer(player);
         sendTo(player, { type: 'stats_update', gold: player.gold, inventory: player.inventory });
         sendTo(player, { type: 'toast', message: 'Bought ' + bought.name });
+        break;
+      }
+      case 'enter_tower': {
+        if (player.floor !== 0) return;
+        const next = 1;
+        player.floor = next; player.x = 150; player.y = 400;
+        if (!floors.get(next)) initFloor(next);
+        const st = floors.get(next);
+        const enemiesList = st ? Array.from(st.enemies.values()).map(publicEnemy) : [];
+        sendTo(player, {
+          type: 'floor_changed', floor: next, floorName: FLOORS[next].name,
+          mapW: FLOORS[next].width, mapH: FLOORS[next].height,
+          player: publicPlayer(player), enemies: enemiesList, npcs: []
+        });
+        broadcast(0, { type: 'player_left', id: player.id });
+        broadcast(next, { type: 'player_joined', player: publicPlayer(player) }, player.id);
+        break;
+      }
+      case 'talk_npc': {
+        const list = NPCS[player.floor] || [];
+        const npc = list.find(n => n.id === data.npcId);
+        if (!npc) return;
+        const line = npc.lines[Math.floor(Math.random() * npc.lines.length)];
+        sendTo(player, { type: 'npc_say', name: npc.name, message: line });
+        break;
+      }
+      case 'leaderboard': {
+        const rows = Object.values(accounts)
+          .map(a => ({ name: a.username, floor: a.highestFloor || 0, level: a.level || 1 }))
+          .sort((a, b) => (b.floor - a.floor) || (b.level - a.level))
+          .slice(0, 20);
+        sendTo(player, { type: 'leaderboard', rows });
         break;
       }
       case 'save': { persistPlayer(player); sendTo(player, { type: 'saved' }); break; }
@@ -366,11 +432,11 @@ function handleEnemyDeath(killer, enemy, floorState) {
     const next = killer.floor + 1;
     if (FLOORS[next]) {
       const prevFloor = killer.floor; killer.floor = next;
-      killer.highestFloor = Math.max(killer.highestFloor || 1, next); killer.title = getTitle(killer.highestFloor);
+      killer.highestFloor = Math.max(killer.highestFloor || 0, next); killer.title = getTitle(killer.highestFloor);
       killer.x = 150; killer.y = 400; if (!floors.get(next)) initFloor(next);
       const nextState = floors.get(next);
       const enemiesList = nextState ? Array.from(nextState.enemies.values()).map(publicEnemy) : [];
-      sendTo(killer, { type: 'floor_changed', floor: next, floorName: FLOORS[next].name, player: publicPlayer(killer), enemies: enemiesList });
+      sendTo(killer, { type: 'floor_changed', floor: next, floorName: FLOORS[next].name, mapW: FLOORS[next].width, mapH: FLOORS[next].height, player: publicPlayer(killer), enemies: enemiesList, npcs: [] });
       broadcast(prevFloor, { type: 'player_left', id: killer.id });
       broadcast(next, { type: 'player_joined', player: publicPlayer(killer) }, killer.id);
     }
@@ -391,7 +457,7 @@ setInterval(() => {
         if (dist < enemy.size / 2 + 35 && now - enemy.lastAttack > 1200) {
           enemy.lastAttack = now; nearest.hp -= enemy.damage;
           if (nearest.hp <= 0) {
-            nearest.hp = 0; nearest.isDead = true; nearest.deaths = (nearest.deaths || 0) + 1; nearest.respawnAt = now + 3000;
+            nearest.hp = 0; nearest.isDead = true; nearest.deaths = (nearest.deaths || 0) + 1; nearest.respawnAt = now;
             persistPlayer(nearest); broadcast(floorNum, { type: 'player_died', id: nearest.id });
           }
           sendTo(nearest, { type: 'stats_update', hp: nearest.hp, maxHp: nearest.maxHp });
@@ -410,7 +476,7 @@ setInterval(() => { for (const p of players.values()) persistPlayer(p); }, 60000
 
 server.listen(PORT, () => {
   console.log('=====================================');
-  console.log('  TOWER MMO');
+  console.log('  TOWER MMO v4');
   console.log('  http://localhost:' + PORT);
   console.log('=====================================');
 });
