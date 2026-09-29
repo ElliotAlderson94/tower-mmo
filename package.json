@@ -1,6 +1,6 @@
 {
   "name": "tower-mmo",
-  "version": "2.3.1",
+  "version": "4.0.0",
   "private": true,
   "description": "Tower MMO multiplayer",
   "main": "index.js",
