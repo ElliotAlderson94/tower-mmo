@@ -3,89 +3,221 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>TOWER — Ascend</title>
+  <title>TOWER</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Crimson+Pro:wght@400;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
   <script src="https://unpkg.com/phaser@3.80.1/dist/phaser.min.js"></script>
 </head>
 <body>
-  <div id="fx-bg"></div>
   <div id="game-container"></div>
   <div id="ui">
     <div id="auth-screen">
-      <div class="auth-orb"></div>
-      <div class="auth-card">
-        <div class="auth-crest">▲</div>
-        <h1 class="auth-logo">TOWER</h1>
-        <p class="auth-tagline">Climb. Survive. Transcend.</p>
-        <div class="auth-divider"><span>ENTER THE TOWER</span></div>
-        <div id="login-form" class="auth-form">
-          <div class="field"><label>Username</label><input id="login-user" type="text" maxlength="16" autocomplete="username" placeholder="Your name, climber..." autofocus /></div>
-          <div class="field"><label>Password</label><input id="login-pass" type="password" maxlength="32" autocomplete="current-password" placeholder="••••••••" /></div>
-          <button type="button" class="btn-primary" id="login-btn"><span>LOGIN</span></button>
-          <div class="err" id="login-error"></div>
-          <button type="button" class="btn-ghost" id="to-register">New climber? Create account</button>
-        </div>
-        <div id="register-form" class="auth-form hidden">
-          <div class="field"><label>Username</label><input id="reg-user" type="text" maxlength="16" autocomplete="username" placeholder="Choose a name" /></div>
-          <div class="field"><label>Password</label><input id="reg-pass" type="password" maxlength="32" autocomplete="new-password" placeholder="Min 4 characters" /></div>
-          <div class="field"><label>Confirm</label><input id="reg-pass2" type="password" maxlength="32" autocomplete="new-password" placeholder="Repeat password" /></div>
-          <button type="button" class="btn-primary" id="register-btn"><span>REGISTER</span></button>
-          <div class="err" id="reg-error"></div>
-          <button type="button" class="btn-ghost" id="to-login">Already have an account? Login</button>
-        </div>
-        <div class="legal-row">
-          <button type="button" class="btn-link" id="open-tos">Terms</button><span class="sep">·</span>
-          <button type="button" class="btn-link" id="open-privacy">Privacy</button>
+      <div class="wood-frame auth-frame">
+        <div class="frame-inner parchment">
+          <div class="auth-crest">⚔</div>
+          <h1 class="auth-logo">TOWER</h1>
+          <p class="auth-tag">Climb · Survive · Ascend</p>
+          <div id="login-form">
+            <label>Username</label>
+            <input id="login-user" type="text" maxlength="16" autocomplete="username" autofocus />
+            <label>Password</label>
+            <input id="login-pass" type="password" maxlength="32" autocomplete="current-password" />
+            <button type="button" class="btn-blue" id="login-btn">LOGIN</button>
+            <div class="err" id="login-error"></div>
+            <button type="button" class="btn-link" id="to-register">No account? Register</button>
+          </div>
+          <div id="register-form" class="hidden">
+            <label>Username</label>
+            <input id="reg-user" type="text" maxlength="16" autocomplete="username" />
+            <label>Password</label>
+            <input id="reg-pass" type="password" maxlength="32" autocomplete="new-password" />
+            <label>Confirm</label>
+            <input id="reg-pass2" type="password" maxlength="32" autocomplete="new-password" />
+            <button type="button" class="btn-blue" id="register-btn">REGISTER</button>
+            <div class="err" id="reg-error"></div>
+            <button type="button" class="btn-link" id="to-login">Have account? Login</button>
+          </div>
+          <div class="legal-row">
+            <button type="button" class="btn-link" id="open-tos">Terms</button> ·
+            <button type="button" class="btn-link" id="open-privacy">Privacy</button>
+          </div>
         </div>
       </div>
     </div>
     <div id="hud" class="hidden">
-      <div id="top-hud" class="glass">
-        <div class="portrait"><div class="portrait-ring"></div><div class="portrait-inner"></div></div>
-        <div class="vitals">
-          <div class="name-row"><span id="player-name" class="pname">Hero</span><span id="player-level" class="plvl">Lv.1</span></div>
-          <div class="bar-row"><span class="blabel hp">HP</span><div class="bar-track"><div class="bar-fill hp" id="hp-bar"></div></div></div>
-          <div class="bar-row"><span class="blabel mp">MP</span><div class="bar-track"><div class="bar-fill mp" id="mana-bar"></div></div></div>
-          <div class="bar-row"><span class="blabel xp">XP</span><div class="bar-track"><div class="bar-fill xp" id="xp-bar"></div></div></div>
-          <div class="gold-row"><span class="coin">◆</span><span id="gold-amount">0</span></div>
+      <div id="top-hud" class="wood-frame">
+        <div class="frame-inner dark">
+          <div class="char-row">
+            <div class="orb-wrap">
+              <svg class="orb-ring" viewBox="0 0 60 60">
+                <circle cx="30" cy="30" r="26" class="orb-bg"/>
+                <circle cx="30" cy="30" r="26" class="orb-hp" id="orb-hp"/>
+              </svg>
+              <div class="orb-face"></div>
+              <span class="orb-lvl" id="player-level">1</span>
+            </div>
+            <div class="char-info">
+              <div class="char-name" id="player-name">Hero</div>
+              <div class="mini-bars">
+                <div class="mbar"><div class="mfill hp" id="hp-bar"></div></div>
+                <div class="mbar"><div class="mfill mp" id="mana-bar"></div></div>
+                <div class="mbar thin"><div class="mfill xp" id="xp-bar"></div></div>
+              </div>
+              <div class="gold-line">◆ <span id="gold-amount">0</span></div>
+            </div>
+          </div>
         </div>
       </div>
-      <div id="floor-badge" class="glass badge"><span class="badge-dot"></span><span id="floor-text">TOWN</span></div>
-      <div id="minimap" class="glass circle-map"><div class="mm-pulse"></div></div>
+      <div id="floor-badge" class="wood-frame"><div class="frame-inner dark"><span id="floor-text">TOWN</span></div></div>
+      <div id="minimap" class="wood-frame circle"><div class="frame-inner dark mm-inner"><div class="mm-dot"></div></div></div>
       <div id="side-btns">
-        <button type="button" class="nav-btn" data-panel="inventory"><i>🎒</i><span>Bag</span></button>
-        <button type="button" class="nav-btn" data-panel="stats"><i>⚡</i><span>Stats</span></button>
-        <button type="button" class="nav-btn" data-panel="profile"><i>👤</i><span>Hero</span></button>
-        <button type="button" class="nav-btn" data-panel="quests"><i>📜</i><span>Quest</span></button>
-        <button type="button" class="nav-btn" data-panel="shop"><i>🏪</i><span>Shop</span></button>
-        <button type="button" class="nav-btn" data-panel="leaderboard"><i>🏆</i><span>Ranks</span></button>
+        <button type="button" class="menu-btn" data-panel="inventory">INVENTORY</button>
+        <button type="button" class="menu-btn" data-panel="stats">STATS</button>
+        <button type="button" class="menu-btn" data-panel="profile">CHARACTER</button>
+        <button type="button" class="menu-btn" data-panel="quests">QUESTS</button>
+        <button type="button" class="menu-btn" data-panel="shop">SHOP</button>
+        <button type="button" class="menu-btn" data-panel="leaderboard">RANKS</button>
+        <button type="button" class="menu-btn" data-panel="search">SEARCH</button>
+        <button type="button" class="menu-btn" data-panel="trade">TRADE</button>
       </div>
-      <div id="skills-bar" class="glass">
-        <div class="skill" data-skill="slash"><kbd>Q</kbd><span class="sk-icon">⚔</span><span class="sk-name">Slash</span></div>
-        <div class="skill" data-skill="dash"><kbd>E</kbd><span class="sk-icon">💨</span><span class="sk-name">Dash</span></div>
-        <div class="skill" data-skill="shockwave"><kbd>R</kbd><span class="sk-icon">💥</span><span class="sk-name">Wave</span></div>
-        <div class="skill"><kbd>SPC</kbd><span class="sk-icon">🗡</span><span class="sk-name">Attack</span></div>
+      <div id="skills-bar" class="wood-frame">
+        <div class="frame-inner dark skills-inner">
+          <div class="skill-slot" data-skill="slash"><span class="sk-n">1</span><span class="sk-i">⚔</span></div>
+          <div class="skill-slot" data-skill="dash"><span class="sk-n">2</span><span class="sk-i">💨</span></div>
+          <div class="skill-slot" data-skill="shockwave"><span class="sk-n">3</span><span class="sk-i">💥</span></div>
+          <div class="skill-slot"><span class="sk-n">4</span><span class="sk-i">🗡</span></div>
+          <div class="skill-slot"><span class="sk-n">5</span><span class="sk-i">🛡</span></div>
+          <div class="skill-slot"><span class="sk-n">6</span><span class="sk-i">✦</span></div>
+        </div>
       </div>
-      <div id="chat-wrap">
-        <button type="button" id="chat-toggle" class="glass chat-tog">Chat ▾</button>
-        <div id="chat-box" class="glass"><div id="chat-messages"></div><input type="text" id="chat-input" placeholder="Message climbers..." maxlength="120" /></div>
+      <div id="chat-wrap" class="wood-frame">
+        <div class="frame-inner dark chat-inner">
+          <div class="chat-tabs"><button type="button" class="chat-tab active" id="chat-toggle">CHAT</button></div>
+          <div id="chat-box">
+            <div id="chat-messages"></div>
+            <div class="chat-send-row">
+              <input type="text" id="chat-input" placeholder="Write a message..." maxlength="120" autocomplete="off" />
+              <button type="button" class="btn-blue sm" id="chat-send">SEND</button>
+            </div>
+          </div>
+        </div>
       </div>
-      <div id="hint" class="hint-bar">WASD move · Space attack · Q E R skills · Click NPCs · Enter the Tower</div>
+      <div id="hint" class="hint-bar">WASD move · Space attack · 1–3 skills · Click NPCs · Walk into the TOWER</div>
     </div>
-    <div id="panel-inventory" class="panel glass hidden"><div class="panel-head"><span>Inventory</span><button type="button" class="xbtn" id="close-inventory">✕</button></div><div class="panel-body"><div class="equip-row" id="equip-slots"><div class="equip-slot" data-slot="weapon">WPN</div><div class="equip-slot" data-slot="armor">ARM</div><div class="equip-slot" data-slot="accessory">ACC</div></div><div class="inv-grid" id="inv-grid"></div><p class="hint-text">Click potions to use · gear to equip</p></div></div>
-    <div id="panel-stats" class="panel glass hidden"><div class="panel-head"><span>Attributes</span><button type="button" class="xbtn" id="close-stats">✕</button></div><div class="panel-body"><div class="stat-line"><span>Skill Points</span><span id="stat-points" class="accent">0</span></div><div class="stat-line"><span>STR</span><span><b id="stat-str">5</b> <button type="button" class="stat-plus" data-stat="str">+</button></span></div><div class="stat-line"><span>AGI</span><span><b id="stat-agi">5</b> <button type="button" class="stat-plus" data-stat="agi">+</button></span></div><div class="stat-line"><span>VIT</span><span><b id="stat-vit">5</b> <button type="button" class="stat-plus" data-stat="vit">+</button></span></div><div class="stat-sep"></div><div class="stat-line"><span>Attack</span><span id="stat-atk">—</span></div><div class="stat-line"><span>Max HP</span><span id="stat-maxhp">—</span></div><div class="stat-line"><span>Max MP</span><span id="stat-maxmp">—</span></div></div></div>
-    <div id="panel-profile" class="panel glass hidden"><div class="panel-head"><span>Character</span><button type="button" class="xbtn" id="close-profile">✕</button></div><div class="panel-body"><div class="hero-banner"></div><div class="profile-name" id="profile-name">—</div><div class="stat-line"><span>Title</span><span id="profile-title" class="accent">—</span></div><div class="stat-line"><span>Level</span><span id="profile-level">1</span></div><div class="stat-line"><span>Highest Floor</span><span id="profile-floor">0</span></div><div class="stat-line"><span>Gold</span><span id="profile-gold">0</span></div><div class="stat-line"><span>Kills</span><span id="profile-kills">0</span></div><div class="stat-line"><span>Bosses</span><span id="profile-bosses">0</span></div><div class="stat-line"><span>Deaths</span><span id="profile-deaths">0</span></div></div></div>
-    <div id="panel-quests" class="panel glass hidden"><div class="panel-head"><span>Quests</span><button type="button" class="xbtn" id="close-quests">✕</button></div><div class="panel-body"><div class="quest-card"><div class="q-title">Welcome</div><p>Talk to the Guide in town.</p></div><div class="quest-card"><div class="q-title">First Climb</div><p>Enter the Tower and clear Floor 1.</p></div><div class="quest-card"><div class="q-title">Slayer</div><p>Defeat 10 enemies.</p></div></div></div>
-    <div id="panel-shop" class="panel glass hidden"><div class="panel-head"><span>Shop</span><button type="button" class="xbtn" id="close-shop">✕</button></div><div class="panel-body" id="shop-list"></div></div>
-    <div id="panel-leaderboard" class="panel glass hidden"><div class="panel-head"><span>Floor Ranks</span><button type="button" class="xbtn" id="close-leaderboard">✕</button></div><div class="panel-body" id="lb-list"><p class="hint-text">Loading ranks...</p></div></div>
-    <div id="death-screen" class="hidden"><div class="death-card glass"><div class="death-icon">☠</div><h2>You Fell</h2><p>The Tower does not forgive the weak.</p><button type="button" class="btn-primary" id="respawn-btn"><span>RISE AGAIN</span></button></div></div>
+    <div id="panel-inventory" class="panel wood-frame hidden">
+      <div class="panel-head blue"><span>INVENTORY</span><button type="button" class="xbtn" id="close-inventory">✕</button></div>
+      <div class="panel-body parchment">
+        <div class="equip-row">
+          <div class="equip-slot" data-slot="weapon">WPN</div>
+          <div class="equip-slot" data-slot="armor">ARM</div>
+          <div class="equip-slot" data-slot="accessory">ACC</div>
+        </div>
+        <div class="inv-grid" id="inv-grid"></div>
+        <div class="inv-footer"><span id="inv-slots">0/24</span> · ◆ <span id="inv-gold">0</span></div>
+      </div>
+    </div>
+    <div id="panel-stats" class="panel wood-frame hidden">
+      <div class="panel-head blue"><span>ATTRIBUTES</span><button type="button" class="xbtn" id="close-stats">✕</button></div>
+      <div class="panel-body parchment">
+        <div class="stat-line">Points <span id="stat-points" class="gold">0</span></div>
+        <div class="stat-line">STR <span><b id="stat-str">5</b> <button type="button" class="stat-plus" data-stat="str">+</button></span></div>
+        <div class="stat-line">AGI <span><b id="stat-agi">5</b> <button type="button" class="stat-plus" data-stat="agi">+</button></span></div>
+        <div class="stat-line">VIT <span><b id="stat-vit">5</b> <button type="button" class="stat-plus" data-stat="vit">+</button></span></div>
+        <div class="stat-line">Attack <span id="stat-atk">—</span></div>
+        <div class="stat-line">Max HP <span id="stat-maxhp">—</span></div>
+        <div class="stat-line">Max MP <span id="stat-maxmp">—</span></div>
+      </div>
+    </div>
+    <div id="panel-profile" class="panel wood-frame hidden">
+      <div class="panel-head blue"><span id="profile-name">CHARACTER</span><button type="button" class="xbtn" id="close-profile">✕</button></div>
+      <div class="panel-body parchment">
+        <div class="profile-hero"><div class="profile-silhouette" id="profile-avatar"></div></div>
+        <div class="stat-line">Title <span id="profile-title" class="gold">—</span></div>
+        <div class="stat-line">Level <span id="profile-level">1</span></div>
+        <div class="stat-line">Highest Floor <span id="profile-floor">0</span></div>
+        <div class="stat-line">Gold <span id="profile-gold">0</span></div>
+        <div class="stat-line">Kills <span id="profile-kills">0</span></div>
+        <div class="stat-line">Bosses <span id="profile-bosses">0</span></div>
+        <div class="stat-line">Deaths <span id="profile-deaths">0</span></div>
+      </div>
+    </div>
+    <div id="panel-quests" class="panel wood-frame hidden">
+      <div class="panel-head blue"><span>AVAILABLE QUESTS</span><button type="button" class="xbtn" id="close-quests">✕</button></div>
+      <div class="panel-body parchment">
+        <div class="quest-card"><div class="q-name">Welcome, Climber</div><p>Speak with the Guide in the Town of Beginnings.</p><div class="q-rewards">Rewards: 50◆ · 20 XP</div></div>
+        <div class="quest-card"><div class="q-name">First Ascent</div><p>Enter the Tower and defeat the Floor 1 Guardian.</p><div class="q-rewards">Rewards: Iron Sword · 100 XP</div></div>
+        <div class="quest-card"><div class="q-name">Beast Slayer</div><p>Defeat 10 enemies within the Tower.</p><div class="q-rewards">Rewards: 80◆ · Health Potion</div></div>
+      </div>
+    </div>
+    <div id="panel-shop" class="panel wood-frame hidden">
+      <div class="panel-head blue"><span>SHOP</span><button type="button" class="xbtn" id="close-shop">✕</button></div>
+      <div class="panel-body parchment" id="shop-list"></div>
+    </div>
+    <div id="panel-leaderboard" class="panel wood-frame hidden">
+      <div class="panel-head blue"><span>FLOOR RANKS</span><button type="button" class="xbtn" id="close-leaderboard">✕</button></div>
+      <div class="panel-body parchment" id="lb-list"><p class="muted">Loading...</p></div>
+    </div>
+    <div id="panel-search" class="panel wood-frame hidden">
+      <div class="panel-head blue"><span>PLAYER SEARCH</span><button type="button" class="xbtn" id="close-search">✕</button></div>
+      <div class="panel-body parchment">
+        <div class="search-row">
+          <input type="text" id="search-input" placeholder="Search climber name..." maxlength="16" />
+          <button type="button" class="btn-blue sm" id="search-btn">SEARCH</button>
+        </div>
+        <div id="search-results" class="search-results"></div>
+      </div>
+    </div>
+    <div id="panel-trade" class="panel wood-frame hidden">
+      <div class="panel-head blue"><span>TRADE</span><button type="button" class="xbtn" id="close-trade">✕</button></div>
+      <div class="panel-body parchment">
+        <p class="muted">Trade with a player on your floor. Enter their name and offer gold.</p>
+        <label>Player name</label>
+        <input type="text" id="trade-target" maxlength="16" placeholder="Username" />
+        <label>Gold to offer</label>
+        <input type="number" id="trade-gold" min="1" max="99999" value="10" />
+        <button type="button" class="btn-blue" id="trade-send">SEND OFFER</button>
+        <div id="trade-status" class="muted" style="margin-top:10px"></div>
+        <div id="trade-incoming"></div>
+      </div>
+    </div>
+    <div id="panel-other" class="panel wood-frame hidden">
+      <div class="panel-head blue"><span id="other-name">PLAYER</span><button type="button" class="xbtn" id="close-other">✕</button></div>
+      <div class="panel-body parchment">
+        <div class="profile-hero"><div class="profile-silhouette" id="other-avatar"></div></div>
+        <div class="stat-line">Title <span id="other-title" class="gold">—</span></div>
+        <div class="stat-line">Level <span id="other-level">—</span></div>
+        <div class="stat-line">Highest Floor <span id="other-floor">—</span></div>
+        <div class="stat-line">Kills <span id="other-kills">—</span></div>
+        <div class="stat-line">Bosses <span id="other-bosses">—</span></div>
+        <button type="button" class="btn-blue" id="other-trade-btn" style="margin-top:12px">TRADE WITH THEM</button>
+      </div>
+    </div>
+    <div id="death-screen" class="hidden">
+      <div class="wood-frame death-frame">
+        <div class="frame-inner parchment center">
+          <div class="death-icon">☠</div>
+          <h2>YOU DIED</h2>
+          <p>The Tower claims another soul...</p>
+          <button type="button" class="btn-blue" id="respawn-btn">RESPAWN</button>
+        </div>
+      </div>
+    </div>
     <div id="toast"></div>
   </div>
-  <div id="modal-tos" class="modal hidden" role="dialog"><div class="modal-card glass"><div class="panel-head"><span>Terms of Service</span><button type="button" class="xbtn" id="close-tos">✕</button></div><div class="modal-body"><p>By playing TOWER you agree to play fairly, not cheat, not harass others, and accept this is an early demo. Accounts may be reset. You must be 13+ years old.</p><p>Progress is stored on the game server. Continued play means you accept these terms.</p></div></div></div>
-  <div id="modal-privacy" class="modal hidden" role="dialog"><div class="modal-card glass"><div class="panel-head"><span>Privacy Policy</span><button type="button" class="xbtn" id="close-privacy">✕</button></div><div class="modal-body"><p>We store username, hashed password, and game progress. We do not sell your data.</p><p>Chat is visible to players on the same floor. Contact the server operator to delete your account.</p></div></div></div>
+  <div id="modal-tos" class="modal hidden">
+    <div class="wood-frame modal-frame"><div class="frame-inner parchment">
+      <div class="panel-head blue"><span>TERMS OF SERVICE</span><button type="button" class="xbtn" id="close-tos">✕</button></div>
+      <div class="modal-body"><p>Play fairly. No cheating or harassment. Demo may reset accounts. Age 13+.</p></div>
+    </div></div>
+  </div>
+  <div id="modal-privacy" class="modal hidden">
+    <div class="wood-frame modal-frame"><div class="frame-inner parchment">
+      <div class="panel-head blue"><span>PRIVACY POLICY</span><button type="button" class="xbtn" id="close-privacy">✕</button></div>
+      <div class="modal-body"><p>We store username, hashed password, and progress. We do not sell data.</p></div>
+    </div></div>
+  </div>
   <script src="game-ui.js"></script>
   <script src="game-scene.js"></script>
 </body>
