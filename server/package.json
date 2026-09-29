@@ -1,14 +1,10 @@
 {
   "name": "tower-mmo-server",
-  "version": "2.3.0",
-  "description": "Tower MMO multiplayer server",
+  "version": "2.3.1",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "build": "echo 'No build step required'"
-  },
-  "engines": {
-    "node": ">=18"
+    "build": "echo 'No build required'"
   },
   "dependencies": {
     "express": "^4.21.2",
