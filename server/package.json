@@ -1,6 +1,6 @@
 {
   "name": "tower-mmo-server",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Tower Manhwa style 2D MMO - Server",
   "main": "index.js",
   "scripts": {

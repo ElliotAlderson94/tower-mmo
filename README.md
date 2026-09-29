@@ -1,63 +1,62 @@
-# Tower MMO – Browser Multiplayer Foundation
+# Tower MMO – Browser Multiplayer
 
 A 2D multiplayer tower-climbing game inspired by tower manhwas (Tower of God, Solo Leveling style).
 
-## Current Features
-- Browser-based (Phaser 3)
-- Real-time multiplayer (WebSocket)
-- Player join / leave
-- Movement sync
-- Basic chat
-- Floor 1 (Entrance Hall)
-- Name tags + unique colors
-- Simple HUD (name, level, floor, HP bar)
+## Features
+
+- **Multiplayer** – Real-time players on the same floor
+- **Combat** – Basic attack (Space) + 3 skills (Q / E / R)
+- **Enemies** – Sli mes, Wolves, Assassins + Floor Bosses
+- **Floors** – Clear the boss to advance (Floor 1 → Floor 2)
+- **Stats & Leveling** – STR / AGI / VIT + skill points on level up
+- **Skills**
+  - Q – Slash (higher damage)
+  - E – Dash (mobility)
+  - R – Shockwave (AoE)
+- **Inventory & Loot** – Potions drop from enemies
+- **HUD** – HP, Mana, XP, Stats panel, Skills bar, Chat
 
 ## How to Run
 
-### 1. Install dependencies
 ```bash
 cd server
 npm install
-```
-
-### 2. Start the server
-```bash
 npm start
 ```
 
-### 3. Open the game
-Go to: **http://localhost:3000**
-
-Open multiple browser tabs (or different browsers) to test multiplayer.
+Open **http://localhost:3000**  
+Use multiple tabs to test multiplayer.
 
 ## Controls
-- **WASD** or **Arrow Keys** → Move
-- **Enter** → Chat
-- **Space** → Attack (placeholder)
+
+| Key | Action |
+|-----|--------|
+| WASD / Arrows | Move |
+| Space | Basic Attack |
+| Q | Slash |
+| E | Dash |
+| R | Shockwave |
+| Enter | Chat |
+| + buttons | Allocate stat points |
 
 ## Project Structure
+
 ```
 tower-mmo/
 ├── server/
-│   ├── index.js          # WebSocket + Express server
+│   ├── index.js
 │   └── package.json
 └── client/
     ├── index.html
     ├── style.css
-    └── game.js           # Phaser 3 client
+    └── game.js
 ```
 
-## Next Steps (recommended order)
-1. Add proper player sprites / animations
-2. Basic combat (HP, damage, death)
-3. Simple enemies on Floor 1
-4. Floor clearing → teleport to Floor 2
-5. Stats + leveling
-6. Skills
-7. Ranking / leaderboard
-8. Inventory & loot
+## Roadmap Ideas
 
-## Notes
-- Server is authoritative for positions
-- Currently one shared floor (Floor 1)
-- No persistence yet (refresh = new character)
+- More floors & unique mechanics
+- Equipment system
+- Party system
+- Ranking leaderboard UI
+- Persistence (database)
+- Better sprites & animations
