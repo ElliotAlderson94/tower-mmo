@@ -1,64 +1,73 @@
-const express = require('express');
 const http = require('http');
-const { WebSocketServer } = require('ws');
-const cors = require('cors');
+const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
+const { WebSocketServer } = require('ws');
 
 function uuidv4() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-    const r = Math.random() * 16 | 0;
-    const v = c === 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
+  return crypto.randomUUID ? crypto.randomUUID() :
+    'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+      const r = Math.random() * 16 | 0;
+      return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+    });
+}
+
+function hashPass(pass) {
+  return crypto.createHash('sha256').update(String(pass) + 'tower-salt-v1').digest('hex');
+}
+
+const ACCOUNTS_FILE = path.join(__dirname, 'accounts.json');
+const CLIENT_DIR = path.join(__dirname, '../client');
+let accounts = {};
+try { accounts = JSON.parse(fs.readFileSync(ACCOUNTS_FILE, 'utf8') || '{}'); } catch { accounts = {}; }
+
+function saveAccounts() {
+  try { fs.writeFileSync(ACCOUNTS_FILE, JSON.stringify(accounts, null, 2)); } catch (e) { console.error('[save]', e.message); }
+}
+
+const MIME = {
+  '.html': 'text/html; charset=utf-8', '.js': 'application/javascript; charset=utf-8',
+  '.css': 'text/css; charset=utf-8', '.json': 'application/json',
+  '.png': 'image/png', '.ico': 'image/x-icon'
+};
+
+function serveStatic(req, res) {
+  let urlPath = decodeURIComponent((req.url || '/').split('?')[0]);
+  if (urlPath === '/') urlPath = '/index.html';
+  const safe = path.normalize(urlPath).replace(/^(\.\.[/\\])+/, '');
+  const filePath = path.join(CLIENT_DIR, safe);
+  if (!filePath.startsWith(CLIENT_DIR)) { res.writeHead(403); res.end('Forbidden'); return; }
+  fs.readFile(filePath, (err, data) => {
+    if (err) { res.writeHead(404); res.end('Not found'); return; }
+    const ext = path.extname(filePath).toLowerCase();
+    res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream', 'Cache-Control': 'no-cache' });
+    res.end(data);
   });
 }
 
-const app = express();
-app.use(cors());
-app.use(express.static(path.join(__dirname, '../client')));
-
-const server = http.createServer(app);
+const server = http.createServer(serveStatic);
 const wss = new WebSocketServer({ server });
-
 const PORT = process.env.PORT || 3000;
 const TICK_RATE = 20;
 
 const FLOORS = {
-  1: {
-    name: 'Entrance Hall',
-    width: 1200,
-    height: 800,
-    enemySpawns: [
-      { type: 'slime', x: 400, y: 300 },
-      { type: 'slime', x: 700, y: 500 },
-      { type: 'slime', x: 900, y: 250 },
-      { type: 'wolf', x: 550, y: 600 },
-      { type: 'wolf', x: 1000, y: 450 }
-    ],
-    boss: { type: 'guardian', x: 1100, y: 400 },
-    clearCondition: 'kill_boss'
-  },
-  2: {
-    name: 'Silent Corridor',
-    width: 1400,
-    height: 900,
-    enemySpawns: [
-      { type: 'wolf', x: 300, y: 200 },
-      { type: 'wolf', x: 600, y: 400 },
-      { type: 'wolf', x: 900, y: 300 },
-      { type: 'assassin', x: 500, y: 700 },
-      { type: 'assassin', x: 1100, y: 500 }
-    ],
-    boss: { type: 'shadow_knight', x: 1300, y: 450 },
-    clearCondition: 'kill_boss'
-  }
+  1: { name: 'Entrance Hall', width: 1200, height: 800,
+    enemySpawns: [{type:'slime',x:400,y:300},{type:'slime',x:700,y:500},{type:'slime',x:900,y:250},{type:'wolf',x:550,y:600},{type:'wolf',x:1000,y:450}],
+    boss: { type: 'guardian', x: 1100, y: 400 } },
+  2: { name: 'Silent Corridor', width: 1400, height: 900,
+    enemySpawns: [{type:'wolf',x:300,y:200},{type:'wolf',x:600,y:400},{type:'assassin',x:500,y:700},{type:'assassin',x:1100,y:500}],
+    boss: { type: 'shadow_knight', x: 1300, y: 450 } },
+  3: { name: 'Burning Ascent', width: 1300, height: 850,
+    enemySpawns: [{type:'wolf',x:350,y:300},{type:'assassin',x:700,y:500},{type:'assassin',x:1000,y:350},{type:'slime',x:500,y:600}],
+    boss: { type: 'guardian', x: 1200, y: 420 } }
 };
 
 const ENEMY_TYPES = {
-  slime: { name: 'Slime', hp: 40, damage: 8, speed: 60, xp: 15, color: '#44cc44', size: 22 },
-  wolf: { name: 'Wolf', hp: 70, damage: 14, speed: 110, xp: 30, color: '#aa7744', size: 26 },
-  assassin: { name: 'Assassin', hp: 55, damage: 22, speed: 150, xp: 40, color: '#8844aa', size: 24 },
-  guardian: { name: 'Floor Guardian', hp: 350, damage: 25, speed: 70, xp: 200, color: '#cc4444', size: 48, isBoss: true },
-  shadow_knight: { name: 'Shadow Knight', hp: 500, damage: 35, speed: 90, xp: 350, color: '#6622aa', size: 52, isBoss: true }
+  slime: { name: 'Slime', hp: 40, damage: 8, speed: 60, xp: 15, gold: 5, color: '#44cc44', size: 22 },
+  wolf: { name: 'Wolf', hp: 70, damage: 14, speed: 110, xp: 30, gold: 12, color: '#aa7744', size: 26 },
+  assassin: { name: 'Assassin', hp: 55, damage: 22, speed: 150, xp: 40, gold: 18, color: '#8844aa', size: 24 },
+  guardian: { name: 'Floor Guardian', hp: 350, damage: 25, speed: 70, xp: 200, gold: 80, color: '#cc4444', size: 48, isBoss: true },
+  shadow_knight: { name: 'Shadow Knight', hp: 500, damage: 35, speed: 90, xp: 350, gold: 120, color: '#6622aa', size: 52, isBoss: true }
 };
 
 const SKILLS = {
@@ -67,314 +76,308 @@ const SKILLS = {
   shockwave: { name: 'Shockwave', cooldown: 6000, damageMult: 0.9, range: 160, mana: 25 }
 };
 
+const TITLES = [
+  { minFloor: 1, name: 'Novice Climber' }, { minFloor: 2, name: 'Ranker' },
+  { minFloor: 3, name: 'Floor Breaker' }, { minFloor: 5, name: 'Tower Hunter' }, { minFloor: 10, name: 'Irregular' }
+];
+
 const players = new Map();
 const floors = new Map();
+const userSessions = new Map();
+
+function makeEnemy(id, type, x, y, t, isBoss) {
+  return { id, type, name: t.name, x, y, hp: t.hp, maxHp: t.hp, damage: t.damage, speed: t.speed,
+    xp: t.xp, gold: t.gold || 0, color: t.color, size: t.size, isBoss: !!isBoss, lastAttack: 0 };
+}
 
 function initFloor(num) {
-  const def = FLOORS[num];
-  if (!def) return null;
-  const enemies = new Map();
-  let eid = 0;
+  const def = FLOORS[num]; if (!def) return null;
+  const enemies = new Map(); let eid = 0;
   for (const spawn of def.enemySpawns) {
-    const type = ENEMY_TYPES[spawn.type];
-    const id = `e${num}_${eid++}`;
-    enemies.set(id, {
-      id, type: spawn.type, name: type.name, x: spawn.x, y: spawn.y,
-      hp: type.hp, maxHp: type.hp, damage: type.damage, speed: type.speed,
-      xp: type.xp, color: type.color, size: type.size, isBoss: false,
-      targetId: null, lastAttack: 0
-    });
+    const t = ENEMY_TYPES[spawn.type]; if (!t) continue;
+    const id = 'e' + num + '_' + (eid++);
+    enemies.set(id, makeEnemy(id, spawn.type, spawn.x, spawn.y, t, false));
   }
   if (def.boss) {
-    const type = ENEMY_TYPES[def.boss.type];
-    const id = `boss_${num}`;
-    enemies.set(id, {
-      id, type: def.boss.type, name: type.name, x: def.boss.x, y: def.boss.y,
-      hp: type.hp, maxHp: type.hp, damage: type.damage, speed: type.speed,
-      xp: type.xp, color: type.color, size: type.size, isBoss: true,
-      targetId: null, lastAttack: 0
-    });
+    const t = ENEMY_TYPES[def.boss.type];
+    if (t) enemies.set('boss_' + num, makeEnemy('boss_' + num, def.boss.type, def.boss.x, def.boss.y, t, true));
   }
   floors.set(num, { enemies, bossAlive: true });
   return floors.get(num);
 }
+initFloor(1); initFloor(2); initFloor(3);
 
-initFloor(1);
-initFloor(2);
+function getTitle(hf) {
+  let name = TITLES[0].name;
+  for (const t of TITLES) if (hf >= t.minFloor) name = t.name;
+  return name;
+}
 
-function createPlayer(id, name) {
+function defaultPlayerData(username) {
   return {
-    id, name: name || `Climber_${id.slice(0, 4)}`, x: 150, y: 400, direction: 'right',
-    floor: 1, hp: 100, maxHp: 100, mana: 50, maxMana: 50, level: 1, xp: 0, xpToLevel: 100,
-    stats: { str: 5, agi: 5, vit: 5 }, skillPoints: 0,
-    skills: { slash: { lastUsed: 0 }, dash: { lastUsed: 0 }, shockwave: { lastUsed: 0 } },
-    inventory: [], highestFloor: 1,
-    color: '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0'),
-    lastUpdate: Date.now(), lastAttack: 0, isDead: false, respawnAt: 0
+    username, passwordHash: '', floor: 1, hp: 100, maxHp: 100, mana: 50, maxMana: 50,
+    level: 1, xp: 0, xpToLevel: 100, stats: { str: 5, agi: 5, vit: 5 }, skillPoints: 0,
+    inventory: [], equipment: { weapon: null, armor: null, accessory: null },
+    gold: 0, highestFloor: 1, kills: 0, bosses: 0, deaths: 0, title: 'Novice Climber',
+    color: '#' + Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0')
   };
 }
 
-function getAttackDamage(player) { return 12 + player.stats.str * 2 + Math.floor(player.level * 1.5); }
-function getMaxHp(player) { return 80 + player.stats.vit * 12 + player.level * 8; }
-function getMaxMana(player) { return 40 + player.stats.agi * 4 + player.level * 3; }
+function getAttackDamage(p) {
+  const w = (p.equipment && p.equipment.weapon && p.equipment.weapon.atk) || 0;
+  return 12 + (p.stats.str || 5) * 2 + Math.floor((p.level || 1) * 1.5) + w;
+}
+function getMaxHp(p) {
+  const a = (p.equipment && p.equipment.armor && p.equipment.armor.hp) || 0;
+  return 80 + (p.stats.vit || 5) * 12 + (p.level || 1) * 8 + a;
+}
+function getMaxMana(p) { return 40 + (p.stats.agi || 5) * 4 + (p.level || 1) * 3; }
 
-function addXp(player, amount) {
-  player.xp += amount;
-  let leveled = false;
-  while (player.xp >= player.xpToLevel) {
-    player.xp -= player.xpToLevel;
-    player.level++;
-    player.skillPoints += 2;
-    player.xpToLevel = Math.floor(100 * Math.pow(1.35, player.level - 1));
-    player.maxHp = getMaxHp(player);
-    player.maxMana = getMaxMana(player);
-    player.hp = player.maxHp;
-    player.mana = player.maxMana;
-    leveled = true;
+function addXp(p, amount) {
+  p.xp += amount; let leveled = false;
+  while (p.xp >= p.xpToLevel) {
+    p.xp -= p.xpToLevel; p.level += 1; p.skillPoints += 2;
+    p.xpToLevel = Math.floor(100 * Math.pow(1.35, p.level - 1));
+    p.maxHp = getMaxHp(p); p.maxMana = getMaxMana(p); p.hp = p.maxHp; p.mana = p.maxMana; leveled = true;
   }
   return leveled;
 }
 
-function broadcast(floorNum, data, excludeId = null) {
+function publicPlayer(p) {
+  return { id: p.id, name: p.username, x: p.x, y: p.y, direction: p.direction, floor: p.floor,
+    hp: p.hp, maxHp: p.maxHp, mana: p.mana, maxMana: p.maxMana, level: p.level, color: p.color,
+    isDead: !!p.isDead, highestFloor: p.highestFloor, title: p.title, gold: p.gold };
+}
+function publicEnemy(e) {
+  return { id: e.id, type: e.type, name: e.name, x: e.x, y: e.y, hp: e.hp, maxHp: e.maxHp, color: e.color, size: e.size, isBoss: e.isBoss };
+}
+function broadcast(floorNum, data, excludeId) {
   const msg = JSON.stringify(data);
   for (const [id, p] of players) {
-    if (p.floor === floorNum && id !== excludeId && p.ws && p.ws.readyState === 1) p.ws.send(msg);
+    if (p.floor === floorNum && id !== excludeId && p.ws && p.ws.readyState === 1) try { p.ws.send(msg); } catch (_) {}
   }
 }
-function broadcastAll(data) {
-  const msg = JSON.stringify(data);
-  for (const p of players.values()) if (p.ws && p.ws.readyState === 1) p.ws.send(msg);
+function sendTo(p, data) {
+  if (p && p.ws && p.ws.readyState === 1) try { p.ws.send(JSON.stringify(data)); } catch (_) {}
 }
-function sendTo(player, data) {
-  if (player.ws && player.ws.readyState === 1) player.ws.send(JSON.stringify(data));
+function persistPlayer(p) {
+  if (!p || !p.username || !accounts[p.username]) return;
+  const a = accounts[p.username];
+  a.level = p.level; a.xp = p.xp; a.xpToLevel = p.xpToLevel; a.stats = Object.assign({}, p.stats);
+  a.skillPoints = p.skillPoints; a.inventory = p.inventory || [];
+  a.equipment = p.equipment || { weapon: null, armor: null, accessory: null };
+  a.gold = p.gold || 0; a.highestFloor = p.highestFloor || 1;
+  a.kills = p.kills || 0; a.bosses = p.bosses || 0; a.deaths = p.deaths || 0;
+  a.title = p.title || getTitle(a.highestFloor); a.color = p.color; a.floor = p.floor;
+  a.hp = p.hp; a.maxHp = p.maxHp; a.mana = p.mana; a.maxMana = p.maxMana; saveAccounts();
 }
-
-function getPublicPlayer(p) {
-  return {
-    id: p.id, name: p.name, x: p.x, y: p.y, direction: p.direction, floor: p.floor,
-    hp: p.hp, maxHp: p.maxHp, mana: p.mana, maxMana: p.maxMana, level: p.level,
-    color: p.color, isDead: p.isDead, highestFloor: p.highestFloor
-  };
-}
-function getPublicEnemy(e) {
-  return {
-    id: e.id, type: e.type, name: e.name, x: e.x, y: e.y, hp: e.hp, maxHp: e.maxHp,
-    color: e.color, size: e.size, isBoss: e.isBoss
-  };
+function kickSession(username) {
+  const oldId = userSessions.get(username); if (!oldId) return;
+  const old = players.get(oldId);
+  if (old) { persistPlayer(old); try { old.ws.close(); } catch (_) {} players.delete(oldId); broadcast(old.floor, { type: 'player_left', id: oldId }); }
+  userSessions.delete(username);
 }
 
 wss.on('connection', (ws) => {
   const id = uuidv4();
-  console.log(`[+] Connected: ${id}`);
-
+  console.log('[+] session', id.slice(0, 8));
   ws.on('message', (raw) => {
-    let data;
-    try { data = JSON.parse(raw); } catch { return; }
-    const player = players.get(id);
+    let data; try { data = JSON.parse(raw.toString()); } catch { return; }
+
+    if (data.type === 'register') {
+      const user = String(data.username || '').trim().slice(0, 16);
+      const pass = String(data.password || '');
+      if (user.length < 3) return ws.send(JSON.stringify({ type: 'auth_error', message: 'Username must be 3+ characters' }));
+      if (!/^[a-zA-Z0-9_]+$/.test(user)) return ws.send(JSON.stringify({ type: 'auth_error', message: 'Only letters, numbers, underscore' }));
+      if (pass.length < 4) return ws.send(JSON.stringify({ type: 'auth_error', message: 'Password must be 4+ characters' }));
+      if (accounts[user]) return ws.send(JSON.stringify({ type: 'auth_error', message: 'Username already taken' }));
+      const pdata = defaultPlayerData(user); pdata.passwordHash = hashPass(pass);
+      accounts[user] = pdata; saveAccounts(); console.log('[register]', user);
+      return ws.send(JSON.stringify({ type: 'auth_ok', message: 'Account created! Please login.' }));
+    }
+
+    if (data.type === 'login') {
+      const user = String(data.username || '').trim();
+      const pass = String(data.password || '');
+      const acc = accounts[user];
+      if (!acc) return ws.send(JSON.stringify({ type: 'auth_error', message: 'Invalid username or password' }));
+      const ok = acc.passwordHash ? acc.passwordHash === hashPass(pass) : acc.password === pass;
+      if (!ok) return ws.send(JSON.stringify({ type: 'auth_error', message: 'Invalid username or password' }));
+      if (!acc.passwordHash && acc.password) { acc.passwordHash = hashPass(pass); delete acc.password; saveAccounts(); }
+      kickSession(user);
+      const p = {
+        id, ws, username: user, name: user, x: 150, y: 400, direction: 'right',
+        lastUpdate: Date.now(), isDead: false, respawnAt: 0, lastAttack: 0,
+        skills: { slash: { lastUsed: 0 }, dash: { lastUsed: 0 }, shockwave: { lastUsed: 0 } },
+        floor: Math.min(Math.max(1, acc.floor || 1), acc.highestFloor || 1),
+        hp: acc.hp || 100, maxHp: acc.maxHp || 100, mana: acc.mana || 50, maxMana: acc.maxMana || 50,
+        level: acc.level || 1, xp: acc.xp || 0, xpToLevel: acc.xpToLevel || 100,
+        stats: acc.stats || { str: 5, agi: 5, vit: 5 }, skillPoints: acc.skillPoints || 0,
+        inventory: Array.isArray(acc.inventory) ? acc.inventory.slice() : [],
+        equipment: acc.equipment || { weapon: null, armor: null, accessory: null },
+        gold: acc.gold || 0, highestFloor: acc.highestFloor || 1,
+        kills: acc.kills || 0, bosses: acc.bosses || 0, deaths: acc.deaths || 0,
+        title: acc.title || 'Novice Climber', color: acc.color || '#6688cc'
+      };
+      if (!FLOORS[p.floor]) p.floor = 1;
+      p.maxHp = getMaxHp(p); p.maxMana = getMaxMana(p);
+      p.hp = Math.min(p.hp || p.maxHp, p.maxHp); p.mana = Math.min(p.mana || p.maxMana, p.maxMana);
+      p.title = getTitle(p.highestFloor || 1);
+      players.set(id, p); userSessions.set(user, id);
+      let floorState = floors.get(p.floor); if (!floorState) floorState = initFloor(p.floor);
+      const enemiesList = floorState ? Array.from(floorState.enemies.values()).map(publicEnemy) : [];
+      sendTo(p, {
+        type: 'welcome', id,
+        player: { ...publicPlayer(p), stats: p.stats, skillPoints: p.skillPoints || 0, xp: p.xp || 0,
+          xpToLevel: p.xpToLevel || 100, inventory: p.inventory, equipment: p.equipment, gold: p.gold || 0,
+          kills: p.kills || 0, bosses: p.bosses || 0, deaths: p.deaths || 0, title: p.title },
+        others: Array.from(players.values()).filter(o => o.id !== id && o.floor === p.floor).map(publicPlayer),
+        enemies: enemiesList, floorName: (FLOORS[p.floor] && FLOORS[p.floor].name) || 'Unknown'
+      });
+      broadcast(p.floor, { type: 'player_joined', player: publicPlayer(p) }, id);
+      console.log('[login]', user, 'floor', p.floor); return;
+    }
+
+    const player = players.get(id); if (!player) return;
 
     switch (data.type) {
-      case 'join': {
-        const p = createPlayer(id, data.name);
-        p.ws = ws;
-        p.maxHp = getMaxHp(p);
-        p.maxMana = getMaxMana(p);
-        p.hp = p.maxHp;
-        p.mana = p.maxMana;
-        players.set(id, p);
-
-        const floorState = floors.get(1);
-        const enemies = floorState ? Array.from(floorState.enemies.values()).map(getPublicEnemy) : [];
-
-        sendTo(p, {
-          type: 'welcome', id,
-          player: { ...getPublicPlayer(p), stats: p.stats, skillPoints: p.skillPoints, xp: p.xp, xpToLevel: p.xpToLevel, inventory: p.inventory, skills: Object.keys(SKILLS) },
-          others: Array.from(players.values()).filter(o => o.id !== id && o.floor === 1).map(getPublicPlayer),
-          enemies, floorName: FLOORS[1].name
-        });
-        broadcast(1, { type: 'player_joined', player: getPublicPlayer(p) }, id);
-        console.log(`${p.name} joined Floor 1. Players: ${players.size}`);
-        break;
-      }
       case 'move': {
-        if (!player || player.isDead) return;
-        const floorDef = FLOORS[player.floor];
-        if (!floorDef) return;
-        player.x = Math.max(30, Math.min(floorDef.width - 30, data.x));
-        player.y = Math.max(30, Math.min(floorDef.height - 30, data.y));
-        player.direction = data.direction || player.direction;
-        player.lastUpdate = Date.now();
-        broadcast(player.floor, { type: 'player_moved', id, x: player.x, y: player.y, direction: player.direction }, id);
-        break;
+        if (player.isDead) return; const fd = FLOORS[player.floor]; if (!fd) return;
+        player.x = Math.max(30, Math.min(fd.width - 30, Number(data.x) || player.x));
+        player.y = Math.max(30, Math.min(fd.height - 30, Number(data.y) || player.y));
+        player.direction = data.direction === 'left' ? 'left' : 'right'; player.lastUpdate = Date.now();
+        broadcast(player.floor, { type: 'player_moved', id, x: player.x, y: player.y, direction: player.direction }, id); break;
       }
       case 'attack': {
-        if (!player || player.isDead) return;
-        const now = Date.now();
-        if (now - player.lastAttack < 450) return;
-        player.lastAttack = now;
-        const dmg = getAttackDamage(player);
-        const range = 65;
-        const floorState = floors.get(player.floor);
-        if (!floorState) return;
-        const hitEnemies = [];
+        if (player.isDead) return; const now = Date.now(); if (now - player.lastAttack < 450) return;
+        player.lastAttack = now; const dmg = getAttackDamage(player); const floorState = floors.get(player.floor); if (!floorState) return;
+        const hits = [];
         for (const enemy of floorState.enemies.values()) {
           const dist = Math.hypot(enemy.x - player.x, enemy.y - player.y);
-          if (dist <= range + enemy.size / 2) {
-            enemy.hp -= dmg;
-            hitEnemies.push({ id: enemy.id, hp: enemy.hp, dmg });
+          if (dist <= 65 + enemy.size / 2) {
+            enemy.hp -= dmg; hits.push({ id: enemy.id, hp: Math.max(0, enemy.hp), dmg });
             if (enemy.hp <= 0) handleEnemyDeath(player, enemy, floorState);
           }
         }
-        broadcast(player.floor, { type: 'player_attack', id, x: player.x, y: player.y, direction: player.direction, hits: hitEnemies });
-        break;
+        broadcast(player.floor, { type: 'player_attack', id, x: player.x, y: player.y, direction: player.direction, hits }); break;
       }
       case 'skill': {
-        if (!player || player.isDead) return;
-        const skillId = data.skill;
-        const skillDef = SKILLS[skillId];
-        if (!skillDef || !player.skills[skillId]) return;
-        const now = Date.now();
-        if (now - player.skills[skillId].lastUsed < skillDef.cooldown) return;
-        if (player.mana < skillDef.mana) return;
-        player.skills[skillId].lastUsed = now;
-        player.mana -= skillDef.mana;
+        if (player.isDead) return; const skillDef = SKILLS[data.skill]; if (!skillDef || !player.skills[data.skill]) return;
+        const now = Date.now(); if (now - player.skills[data.skill].lastUsed < skillDef.cooldown) return;
+        if (player.mana < skillDef.mana) return; player.skills[data.skill].lastUsed = now; player.mana -= skillDef.mana;
         if (skillDef.isDash) {
-          const dist = 180;
-          const dx = player.direction === 'left' ? -dist : dist;
-          const floorDef = FLOORS[player.floor];
-          player.x = Math.max(30, Math.min(floorDef.width - 30, player.x + dx));
+          const dx = player.direction === 'left' ? -180 : 180; const fd = FLOORS[player.floor];
+          player.x = Math.max(30, Math.min(fd.width - 30, player.x + dx));
           broadcast(player.floor, { type: 'player_moved', id, x: player.x, y: player.y, direction: player.direction });
         } else {
-          const dmg = Math.floor(getAttackDamage(player) * skillDef.damageMult);
-          const floorState = floors.get(player.floor);
-          const hits = [];
-          if (floorState) {
-            for (const enemy of floorState.enemies.values()) {
-              const dist = Math.hypot(enemy.x - player.x, enemy.y - player.y);
-              if (dist <= skillDef.range + enemy.size / 2) {
-                enemy.hp -= dmg;
-                hits.push({ id: enemy.id, hp: enemy.hp, dmg });
-                if (enemy.hp <= 0) handleEnemyDeath(player, enemy, floorState);
-              }
+          const dmg = Math.floor(getAttackDamage(player) * skillDef.damageMult); const floorState = floors.get(player.floor); const hits = [];
+          if (floorState) for (const enemy of floorState.enemies.values()) {
+            const dist = Math.hypot(enemy.x - player.x, enemy.y - player.y);
+            if (dist <= skillDef.range + enemy.size / 2) {
+              enemy.hp -= dmg; hits.push({ id: enemy.id, hp: Math.max(0, enemy.hp), dmg });
+              if (enemy.hp <= 0) handleEnemyDeath(player, enemy, floorState);
             }
           }
-          broadcast(player.floor, { type: 'skill_used', id, skill: skillId, x: player.x, y: player.y, hits });
+          broadcast(player.floor, { type: 'skill_used', id, skill: data.skill, x: player.x, y: player.y, hits });
         }
-        sendTo(player, { type: 'stats_update', hp: player.hp, mana: player.mana, maxHp: player.maxHp, maxMana: player.maxMana });
-        break;
+        sendTo(player, { type: 'stats_update', hp: player.hp, mana: player.mana, maxHp: player.maxHp, maxMana: player.maxMana }); break;
       }
       case 'allocate_stat': {
-        if (!player || player.skillPoints <= 0) return;
-        const stat = data.stat;
-        if (!['str', 'agi', 'vit'].includes(stat)) return;
-        player.stats[stat]++;
-        player.skillPoints--;
-        player.maxHp = getMaxHp(player);
-        player.maxMana = getMaxMana(player);
-        if (stat === 'vit') player.hp = Math.min(player.hp + 12, player.maxHp);
-        sendTo(player, { type: 'stats_update', stats: player.stats, skillPoints: player.skillPoints, hp: player.hp, maxHp: player.maxHp, mana: player.mana, maxMana: player.maxMana });
-        break;
+        if ((player.skillPoints || 0) <= 0) return; if (!['str','agi','vit'].includes(data.stat)) return;
+        player.stats[data.stat] = (player.stats[data.stat] || 5) + 1; player.skillPoints -= 1;
+        player.maxHp = getMaxHp(player); player.maxMana = getMaxMana(player);
+        if (data.stat === 'vit') player.hp = Math.min(player.hp + 12, player.maxHp);
+        persistPlayer(player);
+        sendTo(player, { type: 'stats_update', stats: player.stats, skillPoints: player.skillPoints, hp: player.hp, maxHp: player.maxHp, mana: player.mana, maxMana: player.maxMana }); break;
       }
       case 'chat': {
-        if (!player || !data.message) return;
-        broadcast(player.floor, { type: 'chat', id, name: player.name, message: String(data.message).slice(0, 120) });
-        break;
+        const msg = String(data.message || '').trim().slice(0, 120); if (!msg) return;
+        broadcast(player.floor, { type: 'chat', id, name: player.username, message: msg }); break;
       }
       case 'respawn': {
-        if (!player || !player.isDead) return;
-        if (Date.now() < player.respawnAt) return;
-        player.isDead = false;
-        player.hp = player.maxHp;
-        player.mana = player.maxMana;
-        player.x = 150;
-        player.y = 400;
-        broadcast(player.floor, { type: 'player_respawned', player: getPublicPlayer(player) });
-        break;
+        if (!player.isDead || Date.now() < player.respawnAt) return;
+        player.isDead = false; player.hp = player.maxHp; player.mana = player.maxMana; player.x = 150; player.y = 400;
+        broadcast(player.floor, { type: 'player_respawned', player: publicPlayer(player) });
+        sendTo(player, { type: 'stats_update', hp: player.hp, mana: player.mana, maxHp: player.maxHp, maxMana: player.maxMana }); break;
       }
+      case 'save': { persistPlayer(player); sendTo(player, { type: 'saved' }); break; }
+      default: break;
     }
   });
-
   ws.on('close', () => {
     const p = players.get(id);
     if (p) {
-      console.log(`[-] ${p.name} left`);
-      players.delete(id);
-      broadcast(p.floor, { type: 'player_left', id });
+      persistPlayer(p);
+      if (userSessions.get(p.username) === id) userSessions.delete(p.username);
+      players.delete(id); broadcast(p.floor, { type: 'player_left', id });
+      console.log('[-]', p.username || id.slice(0, 8));
     }
   });
+  ws.on('error', () => {});
 });
 
 function handleEnemyDeath(killer, enemy, floorState) {
-  const leveled = addXp(killer, enemy.xp);
-  const lootRoll = Math.random();
-  let loot = null;
-  if (lootRoll < 0.35) loot = { id: uuidv4(), name: 'Health Potion', type: 'consumable', effect: 'heal', value: 40 };
-  else if (lootRoll < 0.5) loot = { id: uuidv4(), name: 'Mana Potion', type: 'consumable', effect: 'mana', value: 30 };
-  if (loot) killer.inventory.push(loot);
+  const leveled = addXp(killer, enemy.xp || 0);
+  killer.gold = (killer.gold || 0) + (enemy.gold || 0); killer.kills = (killer.kills || 0) + 1;
+  let loot = null; const roll = Math.random();
+  if (roll < 0.25) loot = { id: uuidv4(), name: 'Health Potion', type: 'consumable', effect: 'heal', value: 40 };
+  else if (roll < 0.4) loot = { id: uuidv4(), name: 'Mana Potion', type: 'consumable', effect: 'mana', value: 30 };
+  else if (roll < 0.48 && enemy.isBoss) loot = { id: uuidv4(), name: 'Iron Sword', type: 'weapon', atk: 8 };
+  if (loot) { if (!Array.isArray(killer.inventory)) killer.inventory = []; killer.inventory.push(loot); }
   floorState.enemies.delete(enemy.id);
-  broadcast(killer.floor, { type: 'enemy_died', enemyId: enemy.id, killerId: killer.id, xp: enemy.xp, loot });
-  sendTo(killer, { type: 'stats_update', xp: killer.xp, xpToLevel: killer.xpToLevel, level: killer.level, skillPoints: killer.skillPoints, hp: killer.hp, maxHp: killer.maxHp, mana: killer.mana, maxMana: killer.maxMana, inventory: killer.inventory, leveled });
+  broadcast(killer.floor, { type: 'enemy_died', enemyId: enemy.id, killerId: killer.id, xp: enemy.xp, gold: enemy.gold, loot });
+  sendTo(killer, { type: 'stats_update', xp: killer.xp, xpToLevel: killer.xpToLevel, level: killer.level, skillPoints: killer.skillPoints,
+    hp: killer.hp, maxHp: killer.maxHp, mana: killer.mana, maxMana: killer.maxMana, inventory: killer.inventory, gold: killer.gold, kills: killer.kills, leveled });
   if (enemy.isBoss) {
-    floorState.bossAlive = false;
-    const nextFloor = killer.floor + 1;
-    if (FLOORS[nextFloor]) {
-      killer.floor = nextFloor;
-      killer.highestFloor = Math.max(killer.highestFloor, nextFloor);
-      killer.x = 150;
-      killer.y = 400;
-      const nextState = floors.get(nextFloor);
-      const enemies = nextState ? Array.from(nextState.enemies.values()).map(getPublicEnemy) : [];
-      sendTo(killer, { type: 'floor_changed', floor: nextFloor, floorName: FLOORS[nextFloor].name, player: getPublicPlayer(killer), enemies });
-      broadcast(killer.floor, { type: 'player_joined', player: getPublicPlayer(killer) }, killer.id);
-      broadcast(killer.floor - 1, { type: 'player_left', id: killer.id });
+    killer.bosses = (killer.bosses || 0) + 1; floorState.bossAlive = false;
+    const next = killer.floor + 1;
+    if (FLOORS[next]) {
+      const prevFloor = killer.floor; killer.floor = next;
+      killer.highestFloor = Math.max(killer.highestFloor || 1, next); killer.title = getTitle(killer.highestFloor);
+      killer.x = 150; killer.y = 400; if (!floors.get(next)) initFloor(next);
+      const nextState = floors.get(next);
+      const enemiesList = nextState ? Array.from(nextState.enemies.values()).map(publicEnemy) : [];
+      sendTo(killer, { type: 'floor_changed', floor: next, floorName: FLOORS[next].name, player: publicPlayer(killer), enemies: enemiesList });
+      broadcast(prevFloor, { type: 'player_left', id: killer.id });
+      broadcast(next, { type: 'player_joined', player: publicPlayer(killer) }, killer.id);
     }
+    persistPlayer(killer);
   }
 }
 
 setInterval(() => {
   const now = Date.now();
   for (const [floorNum, floorState] of floors) {
-    const playersOnFloor = Array.from(players.values()).filter(p => p.floor === floorNum && !p.isDead);
+    const onFloor = Array.from(players.values()).filter(p => p.floor === floorNum && !p.isDead);
     for (const enemy of floorState.enemies.values()) {
       let nearest = null, nearestDist = Infinity;
-      for (const p of playersOnFloor) {
-        const d = Math.hypot(p.x - enemy.x, p.y - enemy.y);
-        if (d < nearestDist) { nearestDist = d; nearest = p; }
-      }
+      for (const p of onFloor) { const d = Math.hypot(p.x - enemy.x, p.y - enemy.y); if (d < nearestDist) { nearestDist = d; nearest = p; } }
       if (nearest && nearestDist < 450) {
-        const dx = nearest.x - enemy.x, dy = nearest.y - enemy.y;
-        const dist = Math.hypot(dx, dy) || 1;
-        const speed = enemy.speed / TICK_RATE;
-        if (dist > enemy.size / 2 + 20) {
-          enemy.x += (dx / dist) * speed;
-          enemy.y += (dy / dist) * speed;
-        }
+        const dx = nearest.x - enemy.x, dy = nearest.y - enemy.y, dist = Math.hypot(dx, dy) || 1, speed = enemy.speed / TICK_RATE;
+        if (dist > enemy.size / 2 + 20) { enemy.x += (dx / dist) * speed; enemy.y += (dy / dist) * speed; }
         if (dist < enemy.size / 2 + 35 && now - enemy.lastAttack > 1200) {
-          enemy.lastAttack = now;
-          nearest.hp -= enemy.damage;
+          enemy.lastAttack = now; nearest.hp -= enemy.damage;
           if (nearest.hp <= 0) {
-            nearest.hp = 0;
-            nearest.isDead = true;
-            nearest.respawnAt = now + 3000;
-            broadcast(floorNum, { type: 'player_died', id: nearest.id });
+            nearest.hp = 0; nearest.isDead = true; nearest.deaths = (nearest.deaths || 0) + 1; nearest.respawnAt = now + 3000;
+            persistPlayer(nearest); broadcast(floorNum, { type: 'player_died', id: nearest.id });
           }
           sendTo(nearest, { type: 'stats_update', hp: nearest.hp, maxHp: nearest.maxHp });
           broadcast(floorNum, { type: 'enemy_attack', enemyId: enemy.id, targetId: nearest.id, damage: enemy.damage });
         }
       }
     }
-    if (floorState.enemies.size > 0 && playersOnFloor.length > 0) {
-      const enemyPositions = Array.from(floorState.enemies.values()).map(e => ({ id: e.id, x: e.x, y: e.y, hp: e.hp }));
-      broadcast(floorNum, { type: 'enemies_update', enemies: enemyPositions });
+    if (floorState.enemies.size > 0 && onFloor.length > 0) {
+      broadcast(floorNum, { type: 'enemies_update', enemies: Array.from(floorState.enemies.values()).map(e => ({ id: e.id, x: e.x, y: e.y, hp: e.hp })) });
     }
   }
-  for (const p of players.values()) {
-    if (!p.isDead && p.mana < p.maxMana) p.mana = Math.min(p.maxMana, p.mana + 0.15);
-  }
+  for (const p of players.values()) if (!p.isDead && p.mana < p.maxMana) p.mana = Math.min(p.maxMana, p.mana + 0.15);
 }, 1000 / TICK_RATE);
+
+setInterval(() => { for (const p of players.values()) persistPlayer(p); }, 60000);
 
 server.listen(PORT, () => {
   console.log('=====================================');
-  console.log('  Tower MMO Server running');
-  console.log(`  http://localhost:${PORT}`);
+  console.log('  TOWER MMO');
+  console.log('  http://localhost:' + PORT);
   console.log('=====================================');
 });
