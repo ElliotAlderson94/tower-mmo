@@ -1,41 +1,31 @@
 # TOWER — Multiplayer Tower Climbing MMO
 
-Pixel-style 2D multiplayer tower climber inspired by tower manhwas.
-
-## Features
-
-- Real-time multiplayer (WebSocket)
-- Register / Login with saved progress
-- Combat + skills (Q / E / R)
-- Enemies, bosses, floors 1–3
-- Stats, leveling, gold, loot
-- Inventory / Stats / Profile / Quests panels
-- Pixel RPG UI
-
-## Run
+## Run (important)
 
 ```bash
-cd server
+cd tower-mmo/server
 npm install
 npm start
 ```
 
-Open http://localhost:3000 → Register → Login → Climb
+Then open **http://localhost:3000** in your browser.
 
-## Controls
+**Do not open the HTML file directly (file://)** — login will fail because WebSockets need the server.
 
+### First time
+1. Click **REGISTER**
+2. Username: 3+ letters/numbers (e.g. `climber1`)
+3. Password: 4+ characters
+4. Then **LOGIN** with the same details
+
+### Controls
 | Key | Action |
 |-----|--------|
 | WASD / Arrows | Move |
 | Space | Attack |
-| Q | Slash |
-| E | Dash |
-| R | Shockwave |
-| Escape | Close panels |
-| Side buttons | Inventory / Stats / Profile / Quests |
+| Q / E / R | Skills |
+| Side buttons | Inventory / Stats / Profile |
 
-## Notes
-
-- Passwords are hashed (SHA-256)
-- Progress auto-saves on disconnect and every 60s
-- Re-login kicks the previous session for that account
+### Requirements
+- Node.js 18+
+- Only dependency: `ws`
