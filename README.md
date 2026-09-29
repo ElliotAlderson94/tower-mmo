@@ -1,38 +1,26 @@
-# TOWER — Multiplayer Tower Climbing MMO
+# TOWER MMO v3
 
-## Run locally
-
-```bash
-cd server
-npm install
-npm start
-```
-
-Open **http://localhost:3000**
-
-## Build error: "No entrypoint found which imports express"
-
-Fixed in v2.3 — `server/index.js` now imports **express** for static files + WebSocket.
-
+## Run
 ```bash
 git pull
-cd server
-npm install
-npm start
+cd server && npm install && npm start
+# open http://localhost:3000
 ```
 
-### Vercel note
-Vercel is for static/serverless apps. This game needs a **persistent WebSocket server**.
-Use **local**, **Render**, or **Railway** for the full multiplayer server.
-`vercel.json` can host the static client only; the game server should run elsewhere.
-
-## Features
-- Register / Login (saved progress)
-- Combat, skills (Q/E/R), floors 1–3
-- Inventory: click potions to use, weapons to equip
-- Shop (gold)
-- Skill cooldown UI
-- Stats / Profile / Quests panels
+## What's new
+- **Freeze fix**: throttled movement + cooldown UI off the render loop
+- **Town of Beginnings**: spawn in green town (houses, trees, windmills, tower gate)
+- **Tower floors**: dark stone maps
+- **Pixel hero**: hooded 2D climber sprite
+- **Fantasy UI**: wood frames matching RPG kit reference
+- **ToS + Privacy** on login
+- **NPCs**: Guide, Blacksmith, Merchant (click to talk)
+- **Leaderboard** (RANKS button)
+- **Shop**: potions, sword, armor, ring
+- **Inventory**: click to use/equip
 
 ## Controls
-WASD move · Space attack · Q/E/R skills · Side buttons for panels
+WASD/Arrows move · Space attack · Q/E/R skills · Click NPCs · Walk into TOWER to climb
+
+## Deploy note
+WebSockets need a long-running Node host (local / Render / Railway). Vercel is static-only.
