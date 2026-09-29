@@ -9,7 +9,6 @@
 </head>
 <body>
   <div id="game-container"></div>
-
   <div id="ui">
     <div id="auth-screen">
       <div class="auth-panel pixel-panel">
@@ -42,7 +41,6 @@
         </div>
       </div>
     </div>
-
     <div id="hud" class="hidden">
       <div id="top-hud" class="pixel-panel">
         <div class="portrait-box"><div class="portrait-face"></div></div>
@@ -54,10 +52,8 @@
           <div class="gold-line"><span class="coin-px"></span><span id="gold-amount">0</span></div>
         </div>
       </div>
-
       <div id="floor-badge" class="pixel-panel">TOWN</div>
       <div id="minimap" class="pixel-panel"></div>
-
       <div id="side-btns">
         <button type="button" class="side-btn" data-panel="inventory">BAG</button>
         <button type="button" class="side-btn" data-panel="stats">STATS</button>
@@ -66,14 +62,12 @@
         <button type="button" class="side-btn" data-panel="shop">SHOP</button>
         <button type="button" class="side-btn" data-panel="leaderboard">RANKS</button>
       </div>
-
       <div id="skills-bar" class="pixel-panel">
         <div class="skill-slot" data-skill="slash"><b>Q</b><span>⚔</span></div>
         <div class="skill-slot" data-skill="dash"><b>E</b><span>💨</span></div>
         <div class="skill-slot" data-skill="shockwave"><b>R</b><span>💥</span></div>
         <div class="skill-slot"><b>SPC</b><span>🗡</span></div>
       </div>
-
       <div id="chat-wrap">
         <button type="button" id="chat-toggle" class="pixel-panel" title="Toggle chat">CHAT ▾</button>
         <div id="chat-box" class="pixel-panel">
@@ -81,10 +75,8 @@
           <input type="text" id="chat-input" placeholder="Type message..." maxlength="120" />
         </div>
       </div>
-
       <div id="hint" class="pixel-panel">WASD move · Space attack · Click NPCs · Walk into the TOWER</div>
     </div>
-
     <div id="panel-inventory" class="panel pixel-panel hidden">
       <div class="panel-head"><span>INVENTORY</span><button type="button" class="xbtn" id="close-inventory">✕</button></div>
       <div class="panel-body">
@@ -97,7 +89,6 @@
         <p class="hint-text">Click potion to use · gear to equip</p>
       </div>
     </div>
-
     <div id="panel-stats" class="panel pixel-panel hidden">
       <div class="panel-head"><span>STATS</span><button type="button" class="xbtn" id="close-stats">✕</button></div>
       <div class="panel-body">
@@ -110,7 +101,6 @@
         <div class="stat-line">Max MP <span id="stat-maxmp">—</span></div>
       </div>
     </div>
-
     <div id="panel-profile" class="panel pixel-panel hidden">
       <div class="panel-head"><span>CHARACTER</span><button type="button" class="xbtn" id="close-profile">✕</button></div>
       <div class="panel-body">
@@ -125,7 +115,6 @@
         <div class="stat-line">Deaths <span id="profile-deaths">0</span></div>
       </div>
     </div>
-
     <div id="panel-quests" class="panel pixel-panel hidden">
       <div class="panel-head"><span>QUESTS</span><button type="button" class="xbtn" id="close-quests">✕</button></div>
       <div class="panel-body">
@@ -134,17 +123,14 @@
         <div class="quest-card"><b>Slayer</b><p>Defeat 10 enemies.</p></div>
       </div>
     </div>
-
     <div id="panel-shop" class="panel pixel-panel hidden">
       <div class="panel-head"><span>SHOP</span><button type="button" class="xbtn" id="close-shop">✕</button></div>
       <div class="panel-body" id="shop-list"></div>
     </div>
-
     <div id="panel-leaderboard" class="panel pixel-panel hidden">
       <div class="panel-head"><span>FLOOR RANKS</span><button type="button" class="xbtn" id="close-leaderboard">✕</button></div>
       <div class="panel-body" id="lb-list"><p class="hint-text">Loading...</p></div>
     </div>
-
     <div id="death-screen" class="hidden">
       <div class="pixel-panel death-box">
         <h2>YOU DIED</h2>
@@ -154,7 +140,6 @@
     </div>
     <div id="toast"></div>
   </div>
-
   <div id="modal-tos" class="modal hidden" role="dialog">
     <div class="modal-card pixel-panel">
       <div class="panel-head"><span>TERMS OF SERVICE</span><button type="button" class="xbtn" id="close-tos">✕</button></div>
@@ -173,7 +158,7 @@
       </div>
     </div>
   </div>
-
-  <script src="game.js"></script>
+  <script src="game-ui.js"></script>
+  <script src="game-scene.js"></script>
 </body>
 </html>
