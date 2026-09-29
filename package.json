@@ -1,0 +1,16 @@
+{
+  "name": "tower-mmo",
+  "version": "2.3.0",
+  "private": true,
+  "description": "Tower MMO - run from /server",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "build": "echo 'Static client - no compile step'"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "ws": "^8.18.0",
+    "cors": "^2.8.5"
+  }
+}

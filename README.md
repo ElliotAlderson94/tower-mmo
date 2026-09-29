@@ -1,31 +1,38 @@
 # TOWER — Multiplayer Tower Climbing MMO
 
-## Run (important)
+## Run locally
 
 ```bash
-cd tower-mmo/server
+cd server
 npm install
 npm start
 ```
 
-Then open **http://localhost:3000** in your browser.
+Open **http://localhost:3000**
 
-**Do not open the HTML file directly (file://)** — login will fail because WebSockets need the server.
+## Build error: "No entrypoint found which imports express"
 
-### First time
-1. Click **REGISTER**
-2. Username: 3+ letters/numbers (e.g. `climber1`)
-3. Password: 4+ characters
-4. Then **LOGIN** with the same details
+Fixed in v2.3 — `server/index.js` now imports **express** for static files + WebSocket.
 
-### Controls
-| Key | Action |
-|-----|--------|
-| WASD / Arrows | Move |
-| Space | Attack |
-| Q / E / R | Skills |
-| Side buttons | Inventory / Stats / Profile |
+```bash
+git pull
+cd server
+npm install
+npm start
+```
 
-### Requirements
-- Node.js 18+
-- Only dependency: `ws`
+### Vercel note
+Vercel is for static/serverless apps. This game needs a **persistent WebSocket server**.
+Use **local**, **Render**, or **Railway** for the full multiplayer server.
+`vercel.json` can host the static client only; the game server should run elsewhere.
+
+## Features
+- Register / Login (saved progress)
+- Combat, skills (Q/E/R), floors 1–3
+- Inventory: click potions to use, weapons to equip
+- Shop (gold)
+- Skill cooldown UI
+- Stats / Profile / Quests panels
+
+## Controls
+WASD move · Space attack · Q/E/R skills · Side buttons for panels
