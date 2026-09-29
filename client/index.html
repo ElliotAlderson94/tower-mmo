@@ -11,17 +11,15 @@
   <div id="game-container"></div>
   <div id="ui">
     <div id="auth-screen">
-      <h1>TOWER</h1>
-      <p class="subtitle">CLIMB · SURVIVE · ASCEND</p>
-      <div class="auth-box">
+      <div class="auth-panel">
+        <h1>TOWER</h1>
+        <p class="subtitle">CLIMB · SURVIVE · ASCEND</p>
         <div id="login-form">
           <label>USERNAME</label>
-          <input type="text" id="login-user" maxlength="16" autocomplete="username" tabindex="1" autofocus />
+          <input type="text" id="login-user" maxlength="16" autocomplete="username" autofocus />
           <label>PASSWORD</label>
-          <input type="password" id="login-pass" maxlength="32" autocomplete="current-password" tabindex="2" />
-          <div class="auth-btns">
-            <button class="pixel-btn gold" id="login-btn" tabindex="3">LOGIN</button>
-          </div>
+          <input type="password" id="login-pass" maxlength="32" autocomplete="current-password" />
+          <button class="btn-gold" id="login-btn">LOGIN</button>
           <div class="auth-error" id="login-error"></div>
           <div class="auth-switch" id="to-register">No account? REGISTER</div>
         </div>
@@ -32,129 +30,131 @@
           <input type="password" id="reg-pass" maxlength="32" autocomplete="new-password" />
           <label>CONFIRM</label>
           <input type="password" id="reg-pass2" maxlength="32" autocomplete="new-password" />
-          <div class="auth-btns">
-            <button class="pixel-btn gold" id="register-btn">REGISTER</button>
-          </div>
+          <button class="btn-gold" id="register-btn">REGISTER</button>
           <div class="auth-error" id="reg-error"></div>
           <div class="auth-switch" id="to-login">Have account? LOGIN</div>
         </div>
+        <div class="legal-links">
+          <a href="#" id="open-tos">Terms of Service</a>
+          <span>·</span>
+          <a href="#" id="open-privacy">Privacy Policy</a>
+        </div>
       </div>
     </div>
-
+    <div id="modal-tos" class="modal hidden">
+      <div class="modal-panel">
+        <div class="modal-head"><span>TERMS OF SERVICE</span><button class="btn-close" data-close-modal="modal-tos">X</button></div>
+        <div class="modal-body">
+          <p>By playing TOWER you agree to: play fairly, not cheat or exploit, not harass other players, and accept that this is an early demo. Accounts may be reset. Progress is stored on the game server. You must be 13+ to play.</p>
+          <p>We may update these terms. Continued play means you accept the current terms.</p>
+        </div>
+      </div>
+    </div>
+    <div id="modal-privacy" class="modal hidden">
+      <div class="modal-panel">
+        <div class="modal-head"><span>PRIVACY POLICY</span><button class="btn-close" data-close-modal="modal-privacy">X</button></div>
+        <div class="modal-body">
+          <p>We store: username, hashed password, and in-game progress (level, inventory, floors). We do not sell your data. Chat messages are visible to players on the same floor. Data is kept on the game server for gameplay only.</p>
+          <p>Contact the server operator to request account deletion.</p>
+        </div>
+      </div>
+    </div>
     <div id="hud" class="hidden">
-      <div id="top-hud">
-        <div class="portrait-frame">
-          <div class="portrait-inner" id="portrait">🧗</div>
-        </div>
-        <div class="status-block">
-          <div class="status-name">
-            <span id="player-name">—</span>
-            <span class="level" id="player-level">Lv.1</span>
-          </div>
-          <div class="bar-row">
-            <span class="bar-label">HP</span>
-            <div class="bar-track"><div class="bar-fill hp" id="hp-bar" style="width:100%"></div></div>
-          </div>
-          <div class="bar-row">
-            <span class="bar-label">MP</span>
-            <div class="bar-track"><div class="bar-fill mp" id="mana-bar" style="width:100%"></div></div>
-          </div>
-          <div class="bar-row">
-            <span class="bar-label">XP</span>
-            <div class="bar-track"><div class="bar-fill xp" id="xp-bar" style="width:0%"></div></div>
-          </div>
-          <div class="gold-row">
-            <div class="gold-icon"></div>
-            <span id="gold-amount">0</span>
-          </div>
-          <div class="hearts" id="hearts">
-            <div class="heart"></div><div class="heart"></div><div class="heart"></div>
-          </div>
+      <div id="top-hud" class="frame">
+        <div class="portrait" id="portrait"></div>
+        <div class="bars">
+          <div class="name-row"><span id="player-name">—</span><span id="player-level">Lv.1</span></div>
+          <div class="bar"><span>HP</span><div class="track"><div class="fill hp" id="hp-bar"></div></div></div>
+          <div class="bar"><span>MP</span><div class="track"><div class="fill mp" id="mana-bar"></div></div></div>
+          <div class="bar"><span>XP</span><div class="track"><div class="fill xp" id="xp-bar"></div></div></div>
+          <div class="gold-row"><span class="coin"></span><span id="gold-amount">0</span></div>
         </div>
       </div>
-
-      <div id="floor-badge">FLOOR 1 — ENTRANCE HALL</div>
-
+      <div id="floor-badge" class="frame">TOWN</div>
+      <div id="minimap" class="frame circle"><div class="mm-dot"></div></div>
       <div id="side-btns">
-        <button class="side-btn" data-panel="inventory">INVENTORY</button>
+        <button class="side-btn" data-panel="inventory">BAG</button>
         <button class="side-btn" data-panel="stats">STATS</button>
-        <button class="side-btn" data-panel="profile">PROFILE</button>
-        <button class="side-btn" data-panel="quests">QUESTS</button>
+        <button class="side-btn" data-panel="profile">HERO</button>
+        <button class="side-btn" data-panel="quests">QUEST</button>
+        <button class="side-btn" data-panel="shop">SHOP</button>
+        <button class="side-btn" data-panel="leaderboard">RANKS</button>
       </div>
-
-      <div id="skills-bar">
-        <div class="skill-slot" data-skill="slash" title="Slash"><span class="key">Q</span><span class="icon">⚔️</span><span class="name">SLASH</span></div>
-        <div class="skill-slot" data-skill="dash" title="Dash"><span class="key">E</span><span class="icon">💨</span><span class="name">DASH</span></div>
-        <div class="skill-slot" data-skill="shockwave" title="Shockwave"><span class="key">R</span><span class="icon">💥</span><span class="name">WAVE</span></div>
-        <div class="skill-slot" title="Attack"><span class="key">SPC</span><span class="icon">🗡️</span><span class="name">ATK</span></div>
+      <div id="skills-bar" class="frame">
+        <div class="skill-slot" data-skill="slash"><span class="key">Q</span><span class="icon">⚔</span></div>
+        <div class="skill-slot" data-skill="dash"><span class="key">E</span><span class="icon">💨</span></div>
+        <div class="skill-slot" data-skill="shockwave"><span class="key">R</span><span class="icon">💥</span></div>
+        <div class="skill-slot"><span class="key">SPC</span><span class="icon">🗡</span></div>
       </div>
-
-      <div id="chat-box">
+      <div id="chat-box" class="frame">
         <div id="chat-messages"></div>
         <input type="text" id="chat-input" placeholder="Chat..." maxlength="120" />
       </div>
+      <div id="hint" class="frame">WASD move · Space attack · Click NPCs · Walk to the TOWER</div>
     </div>
-
     <div id="panel-inventory" class="panel hidden">
-      <div class="panel-header"><span>INVENTORY</span><button class="panel-close" data-close="inventory">X</button></div>
+      <div class="panel-head"><span>INVENTORY</span><button class="btn-close" data-close="inventory">X</button></div>
       <div class="panel-body">
-        <div style="margin-bottom:8px;font-size:7px;color:#5a4a30">EQUIPMENT</div>
         <div class="equip-row" id="equip-slots">
-          <div class="equip-slot" data-slot="weapon">WEAPON</div>
-          <div class="equip-slot" data-slot="armor">ARMOR</div>
+          <div class="equip-slot" data-slot="weapon">WPN</div>
+          <div class="equip-slot" data-slot="armor">ARM</div>
           <div class="equip-slot" data-slot="accessory">ACC</div>
         </div>
-        <div style="margin-bottom:8px;font-size:7px;color:#5a4a30">BAG</div>
         <div class="inv-grid" id="inv-grid"></div>
+        <p class="hint-text">Click potion to use · weapon/armor to equip</p>
       </div>
     </div>
-
     <div id="panel-stats" class="panel hidden">
-      <div class="panel-header"><span>STATS</span><button class="panel-close" data-close="stats">X</button></div>
+      <div class="panel-head"><span>STATS</span><button class="btn-close" data-close="stats">X</button></div>
       <div class="panel-body">
-        <div class="stat-line">Skill Points <span class="val" id="stat-points">0</span></div>
-        <div class="stat-line">STR <span class="val" id="stat-str">5</span><button class="stat-plus" data-stat="str">+</button></div>
-        <div class="stat-line">AGI <span class="val" id="stat-agi">5</span><button class="stat-plus" data-stat="agi">+</button></div>
-        <div class="stat-line">VIT <span class="val" id="stat-vit">5</span><button class="stat-plus" data-stat="vit">+</button></div>
-        <div class="stat-line">Attack <span class="val" id="stat-atk">—</span></div>
-        <div class="stat-line">Max HP <span class="val" id="stat-maxhp">—</span></div>
-        <div class="stat-line">Max MP <span class="val" id="stat-maxmp">—</span></div>
+        <div class="stat-line">Points <span id="stat-points">0</span></div>
+        <div class="stat-line">STR <span id="stat-str">5</span><button class="stat-plus" data-stat="str">+</button></div>
+        <div class="stat-line">AGI <span id="stat-agi">5</span><button class="stat-plus" data-stat="agi">+</button></div>
+        <div class="stat-line">VIT <span id="stat-vit">5</span><button class="stat-plus" data-stat="vit">+</button></div>
+        <div class="stat-line">Attack <span id="stat-atk">—</span></div>
+        <div class="stat-line">Max HP <span id="stat-maxhp">—</span></div>
+        <div class="stat-line">Max MP <span id="stat-maxmp">—</span></div>
       </div>
     </div>
-
     <div id="panel-profile" class="panel hidden">
-      <div class="panel-header"><span>PROFILE</span><button class="panel-close" data-close="profile">X</button></div>
+      <div class="panel-head"><span>CHARACTER</span><button class="btn-close" data-close="profile">X</button></div>
       <div class="panel-body">
+        <div class="hero-sil"></div>
         <div class="profile-title" id="profile-name">—</div>
-        <div class="profile-row"><span>Title</span><span id="profile-title">Novice Climber</span></div>
-        <div class="profile-row"><span>Level</span><span id="profile-level">1</span></div>
-        <div class="profile-row"><span>Highest Floor</span><span id="profile-floor">1</span></div>
-        <div class="profile-row"><span>Gold</span><span id="profile-gold">0</span></div>
-        <div class="profile-row"><span>Enemies Slain</span><span id="profile-kills">0</span></div>
-        <div class="profile-row"><span>Bosses Defeated</span><span id="profile-bosses">0</span></div>
-        <div class="profile-row"><span>Deaths</span><span id="profile-deaths">0</span></div>
+        <div class="stat-line">Title <span id="profile-title">—</span></div>
+        <div class="stat-line">Level <span id="profile-level">1</span></div>
+        <div class="stat-line">Highest Floor <span id="profile-floor">0</span></div>
+        <div class="stat-line">Gold <span id="profile-gold">0</span></div>
+        <div class="stat-line">Kills <span id="profile-kills">0</span></div>
+        <div class="stat-line">Bosses <span id="profile-bosses">0</span></div>
+        <div class="stat-line">Deaths <span id="profile-deaths">0</span></div>
       </div>
     </div>
-
     <div id="panel-quests" class="panel hidden">
-      <div class="panel-header"><span>QUESTS</span><button class="panel-close" data-close="quests">X</button></div>
+      <div class="panel-head"><span>QUESTS</span><button class="btn-close" data-close="quests">X</button></div>
       <div class="panel-body" id="quest-list">
-        <div class="profile-row"><span>Clear Floor 1</span><span>Active</span></div>
-        <div class="profile-row"><span>Defeat 10 enemies</span><span>0/10</span></div>
-        <div class="profile-row"><span>Reach Level 5</span><span>Locked</span></div>
+        <div class="quest-card"><b>Welcome to Town</b><p>Talk to the Guide NPC near spawn.</p></div>
+        <div class="quest-card"><b>First Climb</b><p>Enter the Tower and clear Floor 1.</p></div>
+        <div class="quest-card"><b>Slayer</b><p>Defeat 10 enemies.</p></div>
       </div>
     </div>
-
-    <div id="death-screen" class="hidden">
-      <h2>YOU DIED</h2>
-      <p>The Tower claims another climber...</p>
-      <button class="pixel-btn gold" id="respawn-btn">RESPAWN</button>
+    <div id="panel-shop" class="panel hidden">
+      <div class="panel-head"><span>SHOP</span><button class="btn-close" data-close="shop">X</button></div>
+      <div class="panel-body" id="shop-list"></div>
     </div>
-
-    <div id="levelup-flash"></div>
+    <div id="panel-leaderboard" class="panel hidden">
+      <div class="panel-head"><span>FLOOR RANKS</span><button class="btn-close" data-close="leaderboard">X</button></div>
+      <div class="panel-body" id="lb-list"><p class="hint-text">Loading...</p></div>
+    </div>
+    <div id="death-screen" class="hidden">
+      <div class="frame death-box">
+        <h2>YOU DIED</h2>
+        <p>The Tower claims another climber...</p>
+        <button class="btn-gold" id="respawn-btn">RESPAWN</button>
+      </div>
+    </div>
     <div id="toast"></div>
   </div>
-
   <script src="game.js"></script>
 </body>
 </html>
