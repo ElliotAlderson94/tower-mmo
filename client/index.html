@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tower MMO - Climb the Tower</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+</head>
+<body>
+  <div id="ui">
+    <div id="login-screen">
+      <h1>TOWER</h1>
+      <p class="subtitle">Climb. Survive. Ascend.</p>
+      <input type="text" id="name-input" placeholder="Enter your name" maxlength="16" />
+      <button id="join-btn">Enter the Tower</button>
+      <p class="hint">Floor 1 • Multiplayer</p>
+    </div>
+
+    <div id="hud" class="hidden">
+      <div id="player-info">
+        <span id="player-name">—</span>
+        <span id="player-level">Lv.1</span>
+        <span id="player-floor">Floor 1</span>
+      </div>
+      <div id="hp-bar-container">
+        <div id="hp-bar"></div>
+      </div>
+      <div id="chat-box">
+        <div id="chat-messages"></div>
+        <input type="text" id="chat-input" placeholder="Press Enter to chat..." maxlength="120" />
+      </div>
+    </div>
+  </div>
+
+  <div id="game-container"></div>
+
+  <script src="game.js"></script>
+</body>
+</html>

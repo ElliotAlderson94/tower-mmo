@@ -1,0 +1,186 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #0a0a12;
+  color: #e0e0ff;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  overflow: hidden;
+  height: 100vh;
+}
+
+#game-container {
+  width: 100vw;
+  height: 100vh;
+}
+
+#ui {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+
+#login-screen {
+  pointer-events: all;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at center, #1a1a2e 0%, #0a0a12 70%);
+}
+
+#login-screen h1 {
+  font-size: 4.5rem;
+  letter-spacing: 12px;
+  font-weight: 700;
+  background: linear-gradient(180deg, #c0c0ff, #6060cc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 0.3rem;
+}
+
+.subtitle {
+  color: #8888aa;
+  margin-bottom: 2.5rem;
+  letter-spacing: 4px;
+  font-size: 0.95rem;
+}
+
+#name-input {
+  background: #16162a;
+  border: 1px solid #404070;
+  color: #e0e0ff;
+  padding: 12px 20px;
+  font-size: 1.1rem;
+  border-radius: 6px;
+  width: 260px;
+  text-align: center;
+  outline: none;
+  margin-bottom: 1rem;
+}
+
+#name-input:focus {
+  border-color: #7070cc;
+}
+
+#join-btn {
+  background: linear-gradient(180deg, #5050bb, #3030aa);
+  border: none;
+  color: white;
+  padding: 12px 36px;
+  font-size: 1.1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+#join-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(80, 80, 200, 0.4);
+}
+
+.hint {
+  margin-top: 2rem;
+  color: #555577;
+  font-size: 0.85rem;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* HUD */
+#hud {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+}
+
+#player-info {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  background: rgba(10, 10, 20, 0.75);
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid #303050;
+  display: flex;
+  gap: 16px;
+  font-size: 0.95rem;
+}
+
+#player-name {
+  font-weight: 600;
+  color: #a0a0ff;
+}
+
+#hp-bar-container {
+  position: absolute;
+  top: 60px;
+  left: 16px;
+  width: 200px;
+  height: 12px;
+  background: #1a1a2a;
+  border-radius: 6px;
+  border: 1px solid #303050;
+  overflow: hidden;
+}
+
+#hp-bar {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #cc3030, #ee6060);
+  transition: width 0.2s;
+}
+
+/* Chat */
+#chat-box {
+  pointer-events: all;
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  width: 320px;
+}
+
+#chat-messages {
+  background: rgba(10, 10, 20, 0.7);
+  border-radius: 8px 8px 0 0;
+  padding: 10px;
+  max-height: 140px;
+  overflow-y: auto;
+  font-size: 0.85rem;
+  border: 1px solid #303050;
+  border-bottom: none;
+}
+
+#chat-messages div {
+  margin-bottom: 4px;
+  word-break: break-word;
+}
+
+#chat-messages .name {
+  color: #9090ee;
+  font-weight: 600;
+}
+
+#chat-input {
+  width: 100%;
+  background: rgba(15, 15, 30, 0.9);
+  border: 1px solid #303050;
+  border-radius: 0 0 8px 8px;
+  color: #e0e0ff;
+  padding: 8px 12px;
+  outline: none;
+  font-size: 0.9rem;
+}
+
+#chat-input:focus {
+  border-color: #5050aa;
+}
