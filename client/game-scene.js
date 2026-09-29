@@ -37,7 +37,8 @@ class MainScene extends Phaser.Scene {
     this.worldGfx = g;
 
     if (floor === 0) {
-      g.fillStyle(0x6b9e3a); g.fillRect(0, 0, 2000, 1600);
+      g.fillStyle(0x5a9038); g.fillRect(0, 0, 2000, 1600);
+      g.fillStyle(0x4a7a30); g.fillRect(0, 0, 2000, 180);
       for (let y = 0; y < 1200; y += 32) {
         for (let x = 0; x < 1600; x += 32) {
           if ((x + y) % 64 === 0) { g.fillStyle(0x5f8f32); g.fillRect(x, y, 32, 32); }
@@ -105,12 +106,12 @@ class MainScene extends Phaser.Scene {
       t.setDepth(2); this.worldDecor.push(t);
       g.fillStyle(0xffffff, 0.15); g.fillCircle(250, 520, 40);
     } else {
-      g.fillStyle(0x1c1814); g.fillRect(0, 0, 2000, 1600);
+      g.fillStyle(0x12101a); g.fillRect(0, 0, 2000, 1600);
       for (let y = 0; y < 1200; y += 48) {
         for (let x = 0; x < 1600; x += 48) {
-          g.fillStyle((x + y) % 96 === 0 ? 0x2a2520 : 0x24201c);
+          g.fillStyle((x + y) % 96 === 0 ? 0x2a2520 : 0x1e1a24);
           g.fillRect(x, y, 48, 48);
-          g.lineStyle(1, 0x1a1612, 0.8);
+          g.lineStyle(1, 0x16121c, 0.8);
           g.strokeRect(x, y, 48, 48);
         }
       }
@@ -120,13 +121,13 @@ class MainScene extends Phaser.Scene {
       }
       for (let i = 0; i < 8; i++) {
         const tx = 100 + i * 180, ty = 100 + (i % 2) * 400;
-        g.fillStyle(0xff9800, 0.12); g.fillCircle(tx, ty, 50);
-        g.fillStyle(0xffc107); g.fillRect(tx - 2, ty - 8, 4, 12);
+        g.fillStyle(0x7c3aed, 0.08); g.fillCircle(tx, ty, 50);
+        g.fillStyle(0xf0c14a); g.fillRect(tx - 2, ty - 8, 4, 12);
       }
     }
     g.setDepth(0);
     this.cameras.main.setBounds(0, 0, floorWidth, floorHeight);
-    this.cameras.main.setBackgroundColor(floor === 0 ? '#6b9e3a' : '#1c1814');
+    this.cameras.main.setBackgroundColor(floor === 0 ? '#4a7a30' : '#12101a');
   }
 
   update(_, delta) {
@@ -178,7 +179,7 @@ const game = new Phaser.Game({
   width: Math.max(640, window.innerWidth),
   height: Math.max(480, window.innerHeight),
   parent: 'game-container',
-  backgroundColor: '#6b9e3a',
+  backgroundColor: '#1a2a18',
   scene: MainScene,
   banner: false,
   input: { keyboard: true, mouse: true },
