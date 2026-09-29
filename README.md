@@ -1,6 +1,6 @@
-# TOWER MMO v5
+# TOWER MMO v6
 
-Cinematic dark tower-climber UI · glass panels · Cinzel + Rajdhani fonts
+Fantasy wood & parchment UI · multiplayer tower climber
 
 ## Run
 ```bash
@@ -11,5 +11,13 @@ npm start
 ```
 Hard-refresh after pull (`Ctrl+Shift+R`).
 
+## v6
+- Wood/parchment UI matching fantasy RPG kit
+- Fixed chat (SEND + Enter) and menu buttons
+- Larger chat panel
+- Detailed town + tower maps
+- Pixel hero + 2D enemy sprites
+- Player search, profiles, gold trading
+
 ## Controls
-WASD · Space attack · Q/E/R skills · Click NPCs · Walk into TOWER
+WASD · Space attack · 1–3 / Q E R skills · Click NPCs/players · Walk into TOWER
